@@ -8,7 +8,7 @@ export function AppHeader({ view, onReset, resetDisabled }: {
 }) {
   return <nav className="app-header" aria-label="Main navigation">
     <a className="app-brand" href="/" aria-label="Dispatch shop dashboard">
-      <img src="/dispatch-logo.png" alt="" />
+      <img src="/dispatch-logo.png" alt="Dispatch" width={56} height={56} />
       <div><div className="brand-name">Dispatch <span className="demo-pill">Demo</span></div>
         <span className="brand-tagline">Cancel free, as long as we fill your spot.</span></div>
     </a>

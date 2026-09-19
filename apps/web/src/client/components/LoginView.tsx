@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../types';
-import { Lock, User, Store, ArrowRight, Sparkles, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Lock, User, Store, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
@@ -37,11 +37,14 @@ export const LoginView: React.FC = () => {
       >
         {/* Brand header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-13 h-13 rounded-2xl bg-[#0d1c42] text-[#fcf1d0] border border-[#22396f] shadow-lg mb-4">
-            <Sparkles size={24} className="text-[#fcf1d0]" />
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#fcf1d0]">
-            Dispatch
+          <h1 className="mb-4">
+            <img
+              src="/dispatch-logo.png"
+              alt="Dispatch"
+              width={160}
+              height={160}
+              className="w-40 h-40 mx-auto rounded-2xl bg-white object-contain"
+            />
           </h1>
           <p className="mt-1.5 text-xs text-[#d8ceb2]">
             Cancel free, as long as we fill your spot.

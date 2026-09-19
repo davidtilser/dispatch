@@ -1,6 +1,6 @@
 .app-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 0; border-bottom: 1px solid var(--border); }
 .app-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0; }
-.app-brand img { display: block; width: 52px; height: 44px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
+.app-brand img { display: block; width: 56px; height: 56px; object-fit: contain; background: white; border-radius: 12px; border: 1px solid var(--border); }
 .brand-name { display: flex; align-items: center; gap: 9px; font-size: 21px; font-weight: 750; letter-spacing: -.6px; }
 .demo-pill { color: var(--text-primary); background: var(--accent); border-radius: 20px; padding: 3px 7px; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 .brand-tagline { display: block; margin-top: 4px; font-size: 10px; color: var(--text-muted); letter-spacing: 0; }

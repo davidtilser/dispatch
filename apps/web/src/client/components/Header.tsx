@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useDemoData } from '../context/DemoDataContext';
-import { LogOut, RotateCcw, User, Store, Sparkles } from 'lucide-react';
+import { LogOut, RotateCcw, User, Store } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { user, logout, switchRole } = useAuth();
@@ -14,9 +14,13 @@ export const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex flex-wrap gap-3 items-center justify-between">
         {/* Brand */}
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-[#22396f] flex items-center justify-center text-[#fcf1d0] shadow-sm border border-[#22396f]/80">
-            <Sparkles size={18} className="text-[#fcf1d0]" />
-          </div>
+          <img
+            src="/dispatch-logo.png"
+            alt="Dispatch"
+            width={56}
+            height={56}
+            className="w-14 h-14 shrink-0 rounded-xl bg-white object-contain border border-[#22396f]"
+          />
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-xl font-bold tracking-tight text-[#fcf1d0]">Dispatch</span>
