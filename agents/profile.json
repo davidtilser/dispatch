@@ -1,0 +1,12 @@
+{
+  "business_id": "biz_001",
+  "business_name": "Apblendzz",
+  "owner_name": "Alex Penos",
+  "business_type": "barbershop",
+  "hours": "e.g. Tue-Sat 10am-7pm",
+  "services": [
+  { "name": "Haircut", "price_usd": 45, "duration_min": 45 },
+  { "name": "Skin fade", "price_usd": 50, "duration_min": 45 }
+],
+"tone": "casual, first names"
+}

@@ -1,0 +1,11 @@
+{
+  "type": "cancellation",
+  "business_id": "biz_001",
+    "slot": { "service": "Haircut", "start": "2026-09-19T15:00", "price_usd": 45, "other_open_times": ["3:30pm", "4:00pm"] },
+  "canceling_customer": "Alex Kim",
+  "fee_policy": { "fee_usd": 45, "waived_if_refilled": true },
+  "waitlist": [
+    { "name": "Jordan", "phone": "+16505550199", "wants": "any afternoon" },
+    { "name": "Sam", "phone": "+16505550188", "wants": "before 4pm" }
+  ]
+}

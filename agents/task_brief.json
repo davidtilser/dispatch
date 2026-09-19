@@ -1,0 +1,20 @@
+{
+  "job_type": "fill_slot",
+  "call_target": {
+    "name": "Jordan",
+    "phone": "+16505550199"
+  },
+  "disclosure": "Hi Jordan, this is an AI assistant calling for Apblendzz.",
+  "offer": "A haircut slot just opened up today at 3:00pm for $45, would you like it?",
+  "allowed_alternatives": [
+    "3:30pm",
+    "4:00pm"
+  ],
+  "on_yes": "book_slot",
+  "on_no": "thank them and end the call",
+  "must_not": [
+    "offer discounts",
+    "pressure",
+    "say who cancelled"
+  ]
+}
