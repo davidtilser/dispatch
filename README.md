@@ -20,6 +20,7 @@ Keep the existing `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` in `.env`. Do n
 
 - Shop dashboard: http://localhost:5173
 - Customer web call: http://localhost:5173/voice
+- Client portal and demo sign-in: http://localhost:5173/client
 - API health: http://127.0.0.1:3001/api/health
 - Verify types, tests and builds: `npm run check`
 
@@ -76,3 +77,21 @@ On acceptance, the path returns **client tool → VoiceService → DispatchManag
 | `POST /api/voice/sessions/:id/end` | `{ "reason": "ended" }` or `failed`; never books or undoes a booking |
 
 This is a local demo API without application login. Keep credentials in `.env`, never in browser code or Git. Nebius Token Factory credits are inference credits, not hosting.
+
+## Web-client design and client portal
+
+The visual design and client screens were adapted from `web-client` into the
+existing React 19 application. The shop dashboard at `/` and browser call at
+`/voice` still use the original NestJS API, DispatchManager and shared SQLite
+calendar. They remain accessible without signing in. Business mode in the
+client portal opens this same shop dashboard.
+
+`/client` (also `/login`) adds the demo sign-in, service categories, filtered
+service search, booking/waitlist dialogs and My Appointments & Queue screens.
+Use `login` / `password`, or the Client Demo and Business Demo shortcuts.
+Authentication is explicitly a browser demo, not a server login. The portal's
+sample businesses, distances, bookings and waitlists are separate from the
+shared shop calendar. Client demo state survives navigation in the same browser
+tab through session storage; its Reset button restores only the client samples.
+The original shop Reset still resets the shared calendar and voice sessions.
+No simulated client voice engine replaces the real `/voice` implementation.

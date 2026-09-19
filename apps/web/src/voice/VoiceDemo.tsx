@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { VoiceConversation } from '@elevenlabs/react';
 import type { VoiceDemoConfiguration, VoiceDemoSession, VoiceSessionStart } from '@dispatch/contracts';
 import { useRingtone } from './useRingtone';
+import { AppHeader } from '../AppHeader';
+import { CalendarDays, MessagesSquare } from 'lucide-react';
 import './voice.css';
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -173,7 +175,7 @@ export function VoiceDemo() {
 
   const context = status !== 'disconnected' ? session?.context ?? config?.context : config?.context ?? session?.context;
   return <main className="voice-demo">
-    <nav><a className="brand-link" href="/" aria-label="Back to Dispatch shop dashboard"><img className="brand-logo" src="/dispatch-logo.png" alt="Dispatch" /><span>← Shop dashboard</span></a><span>LIVE VOICE LAB</span></nav>
+    <AppHeader view="voice" />
     <header><p className="eyebrow">ONE OPEN SLOT. ONE CONVERSATION.</p>
       <h1>Let’s fill that spot.</h1>
       <p>You are the waitlist customer. Talk to Dispatch in English, agree to a time, or decline the offer.</p>
@@ -209,7 +211,7 @@ export function VoiceDemo() {
       </section>
 
       <section className="booking-card">
-        <p className="eyebrow">MOCK CALENDAR</p><h2>{context?.businessName ?? 'Apblendzz'}</h2>
+        <p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Appointment details</p><h2>{context?.businessName ?? 'Apblendzz'}</h2>
         {context && <><p>{context.service} · {context.price} · {context.date}</p><p>Offered: <strong>{context.offeredTime}</strong><br />Available starts: {context.availableTimes.join(', ')}<br /><small>{context.timezone}</small></p></>}
         <div className={`booking-result ${session?.feeWaived ? 'filled' : ''}`} aria-live="polite">
           <strong>{session?.booking ? `Booked for ${session.booking.time}` : session?.status === 'declined' ? 'Offer declined' : session?.status === 'ended' || session?.status === 'failed' ? 'Call ended without a booking' : 'Waiting for an acceptance'}</strong>
@@ -219,7 +221,7 @@ export function VoiceDemo() {
       </section>
     </div>
 
-    <section className="transcript-card"><h2>Conversation</h2>
+    <section className="transcript-card"><p className="eyebrow"><MessagesSquare size={14} aria-hidden="true" />Live transcript</p><h2>Conversation</h2>
       <div className="transcript" role="log" aria-live="polite">
         {messages.length ? messages.map((item, index) => <p key={index}><strong>{item.role === 'agent' ? 'Dispatch' : 'You'}</strong><span>{item.text}</span></p>) : <p className="empty-transcript">The live transcript will appear here.</p>}
       </div>

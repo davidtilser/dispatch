@@ -1,0 +1,16 @@
+@import 'tailwindcss' source('.');
+
+@theme {
+  --color-deep-navy: #010736;
+  --color-prussian-blue: #0d1c42;
+  --color-regal-navy: #22396f;
+  --color-cornsilk: #fcf1d0;
+  --color-cornsilk-light: #fdf8e7;
+  --color-cornsilk-muted: #d8ceb2;
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+}
+
+.client-portal { min-height: 100vh; font-family: var(--font-sans); line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) {
+  .client-portal *, .client-portal *::before, .client-portal *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

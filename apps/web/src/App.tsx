@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { DemoDashboard } from '@dispatch/contracts';
+import { Activity, ArrowUpRight, CalendarDays, Check, Clock3, DollarSign, PhoneCall, Radio, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { AppHeader } from './AppHeader';
 import './dashboard.css';
 
 const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
@@ -47,17 +49,86 @@ export function App() {
     ? `Another refill is active${activeBooking ? ` for ${activeBooking.customerName} at ${time(activeBooking.startsAt)}` : ''}. Complete this refill or reset the demo to cancel another appointment.`
     : undefined;
 
+  const booked = data?.bookings.filter(b => b.status !== 'cancelled').length ?? 0;
+  const waiting = data?.waitlist.filter(c => c.status === 'waiting').length ?? 0;
+  const dateLabel = new Date(`${data?.date ?? '2026-09-19'}T12:00:00Z`).toLocaleDateString('en-US', {
+    timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric',
+  });
+
   return <main className="dashboard">
-    <nav className="shop-nav"><a className="brand-link" href="/" aria-label="Dispatch shop dashboard"><img className="brand-logo" src="/dispatch-logo.png" alt="Dispatch" /><span>Shop dashboard</span></a><div><span className="demo-label">MOCK BOOKING & CALENDAR</span><button className="quiet" disabled={busy || !data} onClick={() => void action('demo/reset')}>Reset demo ↻</button></div></nav>
-    <header className="shop-header"><div><p className="eyebrow">YOUR CHAIR. ALWAYS WORKING.</p><h1>{data?.businessName ?? 'Apblendzz'}<span>Shop overview</span></h1><p>Cancel free, as long as we fill your spot.</p></div><div className="day-label"><strong>Saturday, September 19</strong><span>2026 · Pacific time · One barber</span><small><i /> Live updates every second</small></div></header>
+    <AppHeader view="shop" onReset={() => void action('demo/reset')} resetDisabled={busy || !data} />
+    <header className="shop-header">
+      <div className="shop-intro">
+        <span className="overview-label"><Radio size={13} aria-hidden="true" /> Dispatch command center</span>
+        <h1>{data?.businessName ?? 'Apblendzz'}</h1>
+        <p>Your chair. Always working. Turn an open appointment into your next booking.</p>
+      </div>
+      <div className="day-label">
+        <span className="date-title"><CalendarDays size={16} aria-hidden="true" /><strong>{dateLabel}</strong></span>
+        <span>Pacific time · One barber</span>
+        <small><i /> Live calendar</small>
+      </div>
+      <div className="shop-counts"><span><strong>{data ? booked : '—'}</strong> active bookings</span><span><strong>{data ? waiting : '—'}</strong> on the waitlist</span><span><ShieldCheck size={14} aria-hidden="true" /> One confirmed booking per slot</span></div>
+    </header>
+
     {error && <p role="alert" className="dashboard-error">{error} <button className="quiet" onClick={() => { setError(''); void refresh().catch(() => setError('API unavailable')); }}>Retry</button></p>}
-    <div className="metrics"><article><span>Recovered revenue</span><strong>{money(recovered)}</strong><small>From replacement bookings</small></article><article><span>Cancellation fees pending</span><strong>{money(pending)}</strong><small>Until a replacement is booked</small></article><article className={waived ? 'success-metric' : ''}><span>Customer fees waived</span><strong>{money(waived)}</strong><small>No real charges or refunds</small></article></div>
-    <div className={`refill-banner ${data?.run?.status === 'filled' ? 'complete' : ''}`} aria-live="polite"><div className="agent-mark">D</div><div><p className="eyebrow">DISPATCH AGENT</p><h2>{data?.offer ? `${data.offer.sessionActive ? 'Speaking with' : 'Ready to call'} ${data.offer.customerName}` : data?.run?.status === 'filled' ? 'Spot filled. Customer fee waived.' : data?.run?.status === 'exhausted' ? 'Waitlist complete. No booking accepted.' : 'Turn a cancellation into a full chair.'}</h2><p>{data?.offer ? `${data.offer.service} at ${data.offer.time} · One waitlist candidate at a time. Accept the browser call to begin.` : data?.run?.status === 'filled' ? 'The replacement is saved in the calendar below.' : data?.run?.status === 'exhausted' ? 'The cancellation fee stays pending. Reset to run the demo again.' : 'Cancel Chris’s 3:00 PM appointment below, then open the customer call.'}</p></div><a className="call-link" href="/voice" target="_blank" rel="noreferrer">Open customer call ↗</a></div>
-    <div className="shop-grid"><section className="agenda"><div className="section-title"><h2>Day’s appointments</h2><span>{data?.bookings.filter(b => b.status !== 'cancelled').length ?? '—'} booked</span></div><p className="section-subtitle">45-minute haircuts · $45 · Cancellation fee $15</p>
-      {inProgress && <div className="refill-notice" id="cancel-blocked-reason" role="status"><strong>One refill at a time</strong><p>{cancellationBlockedReason}</p><button className="cancel-button" disabled={busy} onClick={() => void action('demo/reset')}>Reset demo to start over</button><small>Reset restores all demo bookings and clears the current call.</small></div>}
-      <div className="agenda-list">{!data && <p>Loading calendar…</p>}{data?.bookings.map(b => <article key={b.id} className={`appointment ${b.status}`}><div className="appointment-time"><strong>{time(b.startsAt)}</strong><span>{b.durationMinutes} min</span></div><div className="appointment-person"><strong>{b.customerName}</strong><span>{b.service} · {money(b.priceCents)}</span>{b.status === 'cancelled' && <small className={b.feeStatus === 'waived' ? 'fee-waived' : ''}>{money(b.cancellationFeeCents)} fee {b.feeStatus === 'waived' ? 'waived ✓' : 'pending refill'}</small>}{b.status === 'replacement' && <small className="fee-waived">Booked by Dispatch ✓</small>}</div><span className={`badge ${b.status}`}>{b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}</span>{b.status === 'booked' && <button className="cancel-button" disabled={busy || inProgress} title={cancellationBlockedReason} aria-describedby={inProgress ? "cancel-blocked-reason" : undefined} onClick={() => void action(`slots/${b.id}/cancel`)}>{inProgress ? 'Refill active' : busy ? 'Please wait…' : 'Cancel'}</button>}</article>)}</div>
-      <div className="calendar-note">Demo tip: the 3:00 PM slot can move to 3:30 PM. A 4:00 PM start conflicts with the 4:30 PM appointment.</div>
-    </section><aside><section className="waitlist"><div className="section-title"><h2>Waitlist</h2><span>{data?.waitlist.filter(c => c.status === 'waiting').length ?? '—'} waiting</span></div><p className="section-subtitle">Called in order. First acceptance wins.</p>{data?.waitlist.map((c, i) => <div className="waitlist-person" key={c.id}><span className="avatar">{c.name.split(' ').map(n => n[0]).join('')}</span><div><strong>{c.name}</strong><small>{c.status === 'booked' ? 'Replacement booked' : data.offer?.customerName === c.name ? 'Current candidate' : `Waitlist · ${i + 1}`}</small></div><span className={`candidate-dot ${data.offer?.customerName === c.name ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`} /></div>)}</section><section className="activity"><div className="section-title"><h2>Agent activity</h2><span>Live</span></div><div className="event-list" role="log" aria-live="polite">{data?.events.map(e => <div className="event" key={e.id}><span>{new Date(e.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><p>{e.message}</p></div>)}</div></section></aside></div>
+
+    <div className="metrics">
+      <article><div className="metric-label"><span>Recovered revenue</span><DollarSign size={17} aria-hidden="true" /></div><strong>{money(recovered)}</strong><small>From replacement bookings</small></article>
+      <article><div className="metric-label"><span>Cancellation fees pending</span><Clock3 size={17} aria-hidden="true" /></div><strong className={pending ? 'pending-value' : ''}>{money(pending)}</strong><small>Until a replacement is booked</small></article>
+      <article className={waived ? 'success-metric' : ''}><div className="metric-label"><span>Customer fees waived</span><ShieldCheck size={17} aria-hidden="true" /></div><strong>{money(waived)}</strong><small>No real charges or refunds</small></article>
+    </div>
+
+    <div className={`refill-banner ${data?.run?.status === 'filled' ? 'complete' : ''} ${data?.offer ? 'has-offer' : ''}`} aria-live="polite">
+      <div className="agent-mark"><Sparkles size={23} aria-hidden="true" /></div>
+      <div className="agent-copy">
+        <p className="eyebrow">Dispatch voice assistant {data?.offer && <span className="agent-state"><i />{data.offer.sessionActive ? 'In conversation' : 'Call ready'}</span>}</p>
+        <h2>{data?.offer ? `${data.offer.sessionActive ? 'Speaking with' : 'Ready to call'} ${data.offer.customerName}` : data?.run?.status === 'filled' ? 'Spot filled. Customer fee waived.' : data?.run?.status === 'exhausted' ? 'Waitlist complete. No booking accepted.' : 'Turn a cancellation into a full chair.'}</h2>
+        <p>{data?.offer ? `${data.offer.service} at ${data.offer.time} · Accept the browser call to begin.` : data?.run?.status === 'filled' ? 'The replacement is saved in the calendar below.' : data?.run?.status === 'exhausted' ? 'The cancellation fee stays pending. Reset to run the demo again.' : 'Cancel Chris’s 3:00 PM appointment below, then open the customer call.'}</p>
+      </div>
+      <a className="call-link" href="/voice" target="_blank" rel="noreferrer"><PhoneCall size={15} aria-hidden="true" />Open customer call<ArrowUpRight size={14} aria-hidden="true" /></a>
+    </div>
+
+    <div className="shop-grid">
+      <section className="agenda">
+        <div className="section-title"><div><p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Today’s agenda</p><h2>Day’s appointments</h2></div><span className="count-pill">{data ? booked : '—'} booked</span></div>
+        <p className="section-subtitle">45-minute haircuts · $45 · Cancellation fee $15</p>
+        {inProgress && <div className="refill-notice" id="cancel-blocked-reason" role="status"><strong>One refill at a time</strong><p>{cancellationBlockedReason}</p><button className="cancel-button" disabled={busy} onClick={() => void action('demo/reset')}>Reset demo to start over</button><small>Reset restores all demo bookings and clears the current call.</small></div>}
+        <div className="agenda-list">
+          {!data && <p role="status">Loading calendar…</p>}
+          {data?.bookings.map(b => <article key={b.id} className={`appointment ${b.status}`}>
+            <div className="appointment-main">
+              <div className="appointment-time"><Clock3 size={17} aria-hidden="true" /><strong>{time(b.startsAt)}</strong></div>
+              <div className="appointment-person"><div className="person-heading"><strong>{b.customerName}</strong><span className={`badge ${b.status}`}>{b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}</span></div><span>{b.service} · {b.durationMinutes} min · {money(b.priceCents)}</span>{b.status === 'replacement' && <small className="fee-waived"><Check size={12} aria-hidden="true" />Booked by Dispatch</small>}</div>
+            </div>
+            <div className="appointment-actions">
+              {b.status === 'cancelled' && <div className={`fee-status ${b.feeStatus === 'waived' ? 'fee-waived' : ''}`}><strong>{b.feeStatus === 'waived' ? <ShieldCheck size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}{money(b.cancellationFeeCents)} fee {b.feeStatus === 'waived' ? 'waived' : 'pending'}</strong><small>{b.feeStatus === 'waived' ? 'Spot refilled from the waitlist' : 'Waived when this spot is filled'}</small></div>}
+              {b.status === 'booked' && <button className="cancel-button" disabled={busy || inProgress} title={cancellationBlockedReason} aria-describedby={inProgress ? 'cancel-blocked-reason' : undefined} onClick={() => void action(`slots/${b.id}/cancel`)}>{inProgress ? 'Refill active' : busy ? 'Please wait…' : 'Cancel'}</button>}
+            </div>
+          </article>)}
+        </div>
+        <div className="calendar-note"><Sparkles size={15} aria-hidden="true" /><p>Demo tip: the 3:00 PM slot can move to 3:30 PM. A 4:00 PM start conflicts with the 4:30 PM appointment.</p></div>
+      </section>
+
+      <aside className="shop-sidebar">
+        <section className="waitlist">
+          <div className="section-title"><div><p className="eyebrow"><Users size={14} aria-hidden="true" />Queue order</p><h2>Live waitlist</h2></div><span className="count-pill">{data ? waiting : '—'} waiting</span></div>
+          <p className="section-subtitle">Called in order. First acceptance wins.</p>
+          <div className="waitlist-list">{data?.waitlist.map((c, i) => {
+            const active = data.offer?.customerName === c.name;
+            return <div className={`waitlist-person ${active ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`} key={c.id}>
+              <span className="queue-number">{String(i + 1).padStart(2, '0')}</span>
+              <div><strong>{c.name}</strong><small>{c.status === 'booked' ? 'Replacement booked' : active ? 'Current candidate' : `Waitlist · ${i + 1}`}</small></div>
+              <span className={`queue-status ${active ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`}>{c.status === 'booked' ? <><Check size={11} aria-hidden="true" />Booked</> : active ? <><PhoneCall size={11} aria-hidden="true" />{data.offer?.sessionActive ? 'In call' : 'Up next'}</> : 'Waiting'}</span>
+            </div>;
+          })}</div>
+        </section>
+        <section className="activity">
+          <div className="section-title"><div><p className="eyebrow"><Activity size={14} aria-hidden="true" />Behind the scenes</p><h2>Agent activity</h2></div><span className="live-pill"><i />Live</span></div>
+          <div className="event-list" role="log" aria-live="polite">{data?.events.map(e => <div className="event" key={e.id}><span>{new Date(e.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><p>{e.message}</p></div>)}</div>
+        </section>
+      </aside>
+    </div>
     <footer>Hackathon demo · Local SQLite calendar, seeded clients and simulated fees · Real ElevenLabs browser audio when configured · No phone calls or payments</footer>
   </main>;
 }

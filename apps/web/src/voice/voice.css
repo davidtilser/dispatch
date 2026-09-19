@@ -1,10 +1,15 @@
-.voice-demo { max-width: 1100px; margin: 32px auto; }
-.voice-demo nav { display: flex; align-items: center; gap: 16px; justify-content: space-between; font-size: .75rem; letter-spacing: .1em; }
+.voice-demo { max-width: 1280px; margin: 0 auto; padding: 0 32px 24px; }
 .voice-demo a { color: inherit; }
-.voice-demo header { margin: 56px 0 32px; }
+.voice-demo header { margin: 36px 0 28px; }
 .voice-demo h1 { margin: 12px 0; }
 .voice-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
-.voice-demo section { margin: 0; padding: 30px; }
+.voice-demo section { margin: 0; padding: 30px; border-radius: 24px; }
+.voice-demo .eyebrow { display: flex; align-items: center; gap: 7px; font-size: 10px; color: var(--text-muted); }
+.voice-demo .booking-card { background: var(--surface); }
+.voice-demo .booking-card>p { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+.voice-demo .booking-card>small { display: block; font-size: 11px; line-height: 1.7; }
+.voice-demo .transcript-card h2 { font-size: 20px; }
+.voice-demo .transcript { margin-top: 18px; background: var(--page-background); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; font-size: 13px; }
 .call-card { text-align: center; }
 .voice-orb { width: 112px; height: 112px; margin: 12px auto 30px; display: grid; place-items: center; border-radius: 50%; color: var(--cornsilk); background: var(--accent); font-size: 3rem; font-weight: 600; box-shadow: 0 0 0 12px var(--page-background); }
 .voice-orb.live { background: var(--cornsilk); color: var(--deep-navy); }
@@ -65,3 +70,5 @@
   .voice-demo button:hover:not(:disabled) { background: var(--cornsilk); color: var(--deep-navy); }
   .voice-demo button.end-call:hover:not(:disabled) { background: var(--accent); color: var(--cornsilk); }
 }
+
+@media (max-width: 680px) { .voice-demo { padding: 0 16px 20px; margin: 0 auto; } .voice-demo .transcript p { gap: 10px; } .voice-demo .transcript strong { min-width: 60px; } }

@@ -1,3 +1,4 @@
+@import '@fontsource-variable/inter';
 @import '../../../docs/design/palette.css';
 
 :root {
@@ -11,23 +12,29 @@
   --text-on-light: var(--deep-navy);
   --text-on-light-muted: var(--regal-navy);
   --focus-ring: var(--cornsilk);
-  font-family: system-ui, sans-serif;
+  --success: #6ee7b7;
+  --success-border: #065f46;
+  --success-surface: #022c22;
+  --warning: #fcd34d;
+  --danger: #fda4af;
+  --danger-border: #881337;
+  --danger-surface: #4c0519;
+  font-family: 'Inter Variable', system-ui, sans-serif;
   color: var(--text-primary);
   background: var(--page-background);
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
-main { max-width: 760px; margin: 9vh auto; padding: 24px; }
-h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -.04em; }
-p, li { line-height: 1.7; }
+:where(.dashboard, .voice-demo) h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -.04em; }
+:where(.dashboard, .voice-demo) p, :where(.dashboard, .voice-demo) li { line-height: 1.7; }
 a { color: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 ::selection { color: var(--deep-navy); background: var(--cornsilk); }
 .eyebrow { font-weight: 700; letter-spacing: .15em; font-size: .8rem; }
-section { padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 32px 0; }
-h2 { margin-top: 0; font-size: 1.1rem; }
-small { color: var(--text-muted); }
+:where(.dashboard, .voice-demo) section { padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 32px 0; }
+:where(.dashboard, .voice-demo) h2 { margin-top: 0; font-size: 1.1rem; }
+:where(.dashboard, .voice-demo) small { color: var(--text-muted); }
 
 .brand-link { display: inline-flex; align-items: center; gap: 16px; color: var(--text-primary); text-decoration: none; }
 .brand-logo { display: block; width: 108px; height: 88px; object-fit: cover; border-radius: 10px; }
