@@ -1,0 +1,6 @@
+[
+  { "name": "Deep Navy",     "hex": "#010736", "rgb": [1, 7, 54],      "hsl": [233, 96, 11] },
+  { "name": "Prussian Blue", "hex": "#0d1c42", "rgb": [13, 28, 66],    "hsl": [223, 67, 15] },
+  { "name": "Regal Navy",    "hex": "#22396f", "rgb": [34, 57, 111],   "hsl": [222, 53, 28] },
+  { "name": "Cornsilk",      "hex": "#fcf1d0", "rgb": [252, 241, 208], "hsl": [45, 88, 90] }
+]

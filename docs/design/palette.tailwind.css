@@ -1,0 +1,50 @@
+/* Tailwind v4 theme scales generated from the base palette - see docs/design/README.md */
+@theme {
+  --color-deep-navy-50: #e6e9fe;
+  --color-deep-navy-100: #cdd3fe;
+  --color-deep-navy-200: #9ba6fd;
+  --color-deep-navy-300: #697afc;
+  --color-deep-navy-400: #374efb;
+  --color-deep-navy-500: #0522fa;
+  --color-deep-navy-600: #041bc8;
+  --color-deep-navy-700: #031496;
+  --color-deep-navy-800: #020d64;
+  --color-deep-navy-900: #010732;
+  --color-deep-navy-950: #010523;
+
+  --color-prussian-blue-50: #eaeffb;
+  --color-prussian-blue-100: #d4def7;
+  --color-prussian-blue-200: #aabdee;
+  --color-prussian-blue-300: #7f9ce6;
+  --color-prussian-blue-400: #557bdd;
+  --color-prussian-blue-500: #2a5ad5;
+  --color-prussian-blue-600: #2248aa;
+  --color-prussian-blue-700: #193680;
+  --color-prussian-blue-800: #112455;
+  --color-prussian-blue-900: #08122b;
+  --color-prussian-blue-950: #060d1e;
+
+  --color-regal-navy-50: #ebf0f9;
+  --color-regal-navy-100: #d8e0f3;
+  --color-regal-navy-200: #b1c1e7;
+  --color-regal-navy-300: #8aa2db;
+  --color-regal-navy-400: #6383cf;
+  --color-regal-navy-500: #3c64c3;
+  --color-regal-navy-600: #30509c;
+  --color-regal-navy-700: #243c75;
+  --color-regal-navy-800: #18284e;
+  --color-regal-navy-900: #0c1427;
+  --color-regal-navy-950: #080e1b;
+
+  --color-cornsilk-50: #fdf8e7;
+  --color-cornsilk-100: #fcf1cf;
+  --color-cornsilk-200: #f9e29f;
+  --color-cornsilk-300: #f6d46f;
+  --color-cornsilk-400: #f3c63f;
+  --color-cornsilk-500: #f0b80f;
+  --color-cornsilk-600: #c0930c;
+  --color-cornsilk-700: #906e09;
+  --color-cornsilk-800: #604906;
+  --color-cornsilk-900: #302503;
+  --color-cornsilk-950: #221a02;
+}

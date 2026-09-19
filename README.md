@@ -55,6 +55,7 @@ packages/
   contracts/src/    Shared payloads; coordinate changes across owners
 docs/
   demo.md           Slides/business owner: story, business model, demo checklist
+  design/           Brand color palette in CSS, SCSS, Tailwind, and JSON
 ```
 
 The voice Nest module implements browser-session routes. Business/refill modules remain integration points. Implement agents as regular TypeScript classes in `packages/agents`, then provide them through Nest services/factory providers in `apps/api`. Keep ElevenLabs-specific code in `packages/voice`; keep browser code and all secrets separate.
