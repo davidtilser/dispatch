@@ -1,18 +1,25 @@
 import type { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { callEndingInstructions, dispatchFirstMessage, endCallTool, naturalSpeechInstructions } from './agent-config.js';
+import { callEndingInstructions, discountInstructions, dispatchFirstMessage, endCallTool, naturalSpeechInstructions } from './agent-config.js';
 
 // Update speech and ending policy; keep voice, LLM, client tools and custom instructions.
 export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: string) {
   const current = await client.conversationalAi.agents.get(agentId);
   const prompt = current.conversationConfig.agent?.prompt;
+  const placeholders = (current.conversationConfig.agent?.dynamicVariables as {
+    dynamic_variable_placeholders?: Record<string, string>;
+  } | undefined)?.dynamic_variable_placeholders;
   const existing = (prompt?.prompt ?? '').replace(
     'After a confirmed booking or decline, say a short goodbye. The customer can end the web call.', '',
-  ).trim();
-  const updated = [callEndingInstructions, naturalSpeechInstructions].reduce(
+  ).replace('Never offer discounts, invent services or availability,', 'Never invent services or availability,').trim();
+  const updated = [callEndingInstructions, naturalSpeechInstructions, discountInstructions].reduce(
     (text, instructions) => text.includes(instructions) ? text : `${text}\n${instructions}`, existing,
   );
   await client.conversationalAi.agents.update(agentId, {
-    conversationConfig: { agent: { firstMessage: dispatchFirstMessage, prompt: {
+    conversationConfig: { agent: { firstMessage: dispatchFirstMessage,
+      dynamicVariables: { dynamic_variable_placeholders: {
+        ...placeholders,
+        discount: '', discount_offer: '',
+      } }, prompt: {
       prompt: updated,
       builtInTools: { ...prompt?.builtInTools, endCall: endCallTool },
     } } },
@@ -21,6 +28,7 @@ export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: s
   if (verified.conversationConfig.agent?.prompt?.builtInTools?.endCall?.params.systemToolType !== 'end_call'
     || !verified.conversationConfig.agent.prompt.prompt?.includes(callEndingInstructions)
     || !verified.conversationConfig.agent.prompt.prompt?.includes(naturalSpeechInstructions)
+    || !verified.conversationConfig.agent.prompt.prompt?.includes(discountInstructions)
     || verified.conversationConfig.agent.firstMessage !== dispatchFirstMessage) {
     throw new Error('Voice agent configuration was not saved.');
   }

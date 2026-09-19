@@ -9,6 +9,7 @@ export interface VoiceDemoContext {
   customerName: string;
   service: string;
   price: string;
+  discount?: string;
   date: string;
   timezone: string;
   offeredTime: string;

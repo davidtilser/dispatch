@@ -19,6 +19,8 @@ export interface BookingSlot {
   durationMinutes: number;
   service: string;
   priceCents: number;
+  // Approved discount description (e.g. "20% off"); priceCents is the final price.
+  discount?: string;
   currency: string;
 }
 export interface WaitlistContact {

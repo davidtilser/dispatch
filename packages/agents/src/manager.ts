@@ -219,12 +219,19 @@ export class DispatchManager implements ManagerAgent {
     const fallback = templateBrief(state.business, state.slot, contact, alternatives);
     if (!this.deps.briefWriter) return fallback;
     try {
-      return await this.deps.briefWriter.write({
+      const brief = await this.deps.briefWriter.write({
         business: state.business,
         slot: state.slot,
         contact,
         alternatives,
       });
+      const discount = state.slot.discount?.trim();
+      return {
+        ...brief,
+        offer: discount && !brief.offer.includes(discount)
+          ? `${brief.offer} This opening includes a discount: ${discount}.` : brief.offer,
+        mustNot: brief.mustNot.map(rule => rule.toLowerCase().trim() === 'offer discounts' ? 'offer additional, unapproved discounts' : rule),
+      };
     } catch (error) {
       console.warn(`Brief writer failed, using template: ${errorMessage(error)}`);
       return fallback;
@@ -266,6 +273,7 @@ export class ClaudeBriefWriter implements BriefWriter {
           service: slot.service,
           start: formatTime(slot.startsAt, business.timezone),
           price_usd: slot.priceCents / 100,
+          discount: slot.discount?.trim() || undefined,
           other_open_times: alternatives,
         },
         waitlist: [{ name: contact.name, phone: contact.phoneE164 }],
@@ -304,12 +312,13 @@ export function templateBrief(
   alternatives: string[],
 ): CallBrief {
   const time = formatTime(slot.startsAt, business.timezone);
-  const price = `$${(slot.priceCents / 100).toFixed(0)}`;
+  const price = `$${slot.priceCents / 100}`;
+  const discount = slot.discount?.trim();
   return {
     disclosure: `Hi ${contact.name}, this is an AI assistant calling for ${business.name}.`,
-    offer: `A ${slot.service.toLowerCase()} just opened up today at ${time} for ${price}. Would you like it?`,
+    offer: `A ${slot.service.toLowerCase()} just opened up today at ${time} for ${price}.${discount ? ` This opening includes a discount: ${discount}.` : ''} Would you like it?`,
     allowedAlternatives: alternatives,
-    mustNot: ['offer discounts', 'pressure', 'say who cancelled'],
+    mustNot: ['offer additional, unapproved discounts', 'pressure', 'say who cancelled'],
   };
 }
 

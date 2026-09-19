@@ -12,7 +12,9 @@ English conversation with ElevenLabs over WebRTC. No Twilio, telephone number, o
 
 If an ElevenLabs agent already works, reuse its ID and skip agent creation.
 
-To update an existing agent’s greeting, natural date/time speech, reminders and automatic hangup, run `npm run voice:update` once. It refreshes the greeting and speech instructions, enables the built-in `end_call` tool and updates the ending instructions on the existing agent while preserving voice, LLM, client tools and other settings. Start a new call after the update; no API restart is needed.
+To update an existing agent’s greeting, discount mentions, natural date/time speech, reminders and automatic hangup, run `npm run voice:update` once. It refreshes the greeting and speech instructions, enables the built-in `end_call` tool and updates the ending instructions on the existing agent while preserving voice, LLM, client tools and other settings. Start a new call after the update.
+
+An appointment can supply an optional `discount` description, such as `"20% off"` or `"$10 off"`. Its `priceCents` must already contain the final discounted price. The manager forwards the discount to the call brief and voice context, and the agent highlights it in its opening offer without subtracting it again. Missing or blank discounts are not mentioned. The default seed has no discount. After updating application code, rebuild/restart the API before starting a call with the updated agent.
 
 The setup uses ElevenLabs' default voice/LLM. You can change them in the ElevenLabs dashboard. The agent receives shop/customer/appointment information via dynamic variables. There is a five-minute conversation cap. API keys remain on the backend; the browser receives only a conversation token.
 

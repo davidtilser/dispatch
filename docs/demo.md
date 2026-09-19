@@ -27,4 +27,4 @@ One real call working end to end by **2:30**. Record a backup video as soon as i
 
 ## Vision only
 
-Discounts, a customer marketplace, ads, and parallel calling are out of today's build.
+Discount calculation, a customer marketplace, ads, and parallel calling are out of today's build. The voice agent can mention an approved discount supplied on an appointment; its price must already be the final discounted price.
