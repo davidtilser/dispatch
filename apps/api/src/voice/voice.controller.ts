@@ -11,7 +11,10 @@ export class VoiceController {
 
   @Post('sessions')
   @Header('Cache-Control', 'no-store')
-  start() { return this.voice.start(); }
+  start(@Body() body: { attemptId?: unknown } = {}) {
+    if (body.attemptId !== undefined && typeof body.attemptId !== 'string') throw new BadRequestException('Invalid attempt ID');
+    return this.voice.start(body.attemptId as string | undefined);
+  }
 
   @Get('sessions/:id')
   session(@Param('id') id: string) { return this.voice.get(id); }

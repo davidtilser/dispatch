@@ -1,0 +1,67 @@
+.dashboard { max-width: 1280px; padding: 30px 40px; margin: 0 auto; }
+.dashboard * { box-sizing: border-box; }
+.dashboard button, .dashboard a { transition: background .15s; }
+.dashboard button { font: inherit; cursor: pointer; }
+.dashboard button:disabled { opacity: .4; cursor: not-allowed; }
+.dashboard button:focus-visible, .dashboard a:focus-visible { outline: 3px solid #ca8826; outline-offset: 4px; }
+.shop-nav, .shop-nav>div, .shop-header, .section-title { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.shop-nav { border-bottom: 1px solid #d8dfd8; padding-bottom: 24px; }
+.wordmark { color: var(--deep-navy); font-size: 27px; font-weight: 800; letter-spacing: -1.4px; text-decoration: none; }
+.wordmark span { font-size: 17px; font-weight: 400; color: #68718a; letter-spacing: -.4px; }
+.demo-label { font-size: 10px; letter-spacing: 1.2px; color: #68718a; border: 1px solid #d5ded5; padding: 7px 9px; border-radius: 5px; }
+.quiet { background: transparent; color: var(--regal-navy); border: 0; padding: 8px; font-size: 12px !important; }
+.shop-header { margin: 36px 0 28px; }
+.shop-header .eyebrow { color: var(--regal-navy); font-size: 10px; }
+.shop-header h1 { font-size: 38px; margin: 12px 0 0; }
+.shop-header h1 span { display: block; font-size: 17px; font-weight: 400; letter-spacing: -.3px; margin-top: 9px; color: #68718a; }
+.shop-header p { margin: 10px 0; font-size: 13px; color: #68718a; }
+.day-label { text-align: right; display: grid; gap: 8px; font-size: 13px; }
+.day-label span { color: #68718a; font-size: 12px; }
+.day-label small { font-size: 10px; }
+.day-label i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #578664; margin-right: 5px; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.metrics article { display: grid; gap: 10px; background: white; border: 1px solid #dde3db; border-radius: 12px; padding: 20px 24px; }
+.metrics article>span { font-size: 12px; color: #68718a; }
+.metrics strong { font-size: 34px; letter-spacing: -1.5px; }
+.metrics small { font-size: 11px; color: #829083; }
+.metrics .success-metric { background: #e8f0de; border-color: #bbcfaa; }
+.refill-banner { display: flex; align-items: center; gap: 18px; background: var(--cornsilk); border: 1px solid #e2d7b7; padding: 23px; margin: 22px 0; border-radius: 12px; }
+.refill-banner.complete { background: #e2efd9; }
+.agent-mark { flex: 0 0 42px; height: 42px; border-radius: 50%; background: var(--regal-navy); color: var(--cornsilk); display: grid; place-items: center; font-size: 21px; }
+.refill-banner .eyebrow { font-size: 9px; color: var(--regal-navy); margin: 0 0 7px; }
+.refill-banner h2 { font-size: 17px; margin: 0; }
+.refill-banner p { font-size: 11px; color: #596477; margin: 6px 0 0; }
+.call-link { margin-left: auto; flex-shrink: 0; color: white; background: var(--regal-navy); padding: 12px 16px; border-radius: 7px; text-decoration: none; font-size: 12px; }
+.shop-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 22px; }
+.dashboard section { margin: 0 0 20px; padding: 24px; border-color: #dfe5dd; }
+.section-title h2 { font-size: 15px; margin: 0; }
+.section-title>span { font-size: 10px; color: #72846d; }
+.section-subtitle { font-size: 11px; color: #83907f; margin: 8px 0 24px; }
+.appointment { display: flex; align-items: center; gap: 14px; border-top: 1px solid #edf0e9; min-height: 91px; padding: 18px 0; }
+.appointment-time { flex: 0 0 78px; display: grid; gap: 8px; font-size: 12px; }
+.appointment-time span { font-size: 10px; color: #879083; }
+.appointment-person { display: grid; gap: 5px; font-size: 13px; }
+.appointment-person>span { color: #68718a; font-size: 11px; }
+.appointment-person small { font-size: 10px; color: #a07935; }
+.appointment-person small.fee-waived { color: #3d7853; }
+.badge { margin-left: auto; padding: 5px 7px; border-radius: 5px; font-size: 9px; background: #eef1e9; color: #65705d; }
+.badge.cancelled { background: #f7eddc; color: #977034; }
+.badge.replacement { background: #dbedcd; color: #38623a; }
+.cancel-button { border: 1px solid #e7dace; background: white; border-radius: 5px; color: #977052; padding: 5px 7px; font-size: 10px !important; }
+.appointment.replacement { background: #f0f6e9; margin: 0 -12px; padding: 18px 12px; border-radius: 7px; }
+.calendar-note { margin: 20px 0 0; padding: 14px; background: #f5f7f1; font-size: 11px; line-height: 1.6; color: #68718a; border-radius: 6px; }
+.waitlist-person { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #edf0e9; }
+.avatar { width: 33px; height: 33px; display: grid; place-items: center; background: #eef0e6; border-radius: 50%; font-size: 10px; color: #7b856c; }
+.waitlist-person>div { display: grid; gap: 5px; font-size: 12px; }
+.waitlist-person small { font-size: 10px; color: #83917b; }
+.candidate-dot { width: 7px; height: 7px; border-radius: 50%; background: #dce1d7; margin-left: auto; }
+.candidate-dot.active { background: #cf9d47; box-shadow: 0 0 0 4px #f8efdb; }
+.candidate-dot.booked { background: #629d50; }
+.event-list { max-height: 310px; overflow-y: auto; margin-top: 16px; }
+.event { padding: 13px 0; border-top: 1px solid #edf0e9; }
+.event>span { font-size: 9px; color: #96a18a; font-variant-numeric: tabular-nums; }
+.event p { font-size: 11px; line-height: 1.6; margin: 5px 0 0; color: #53627b; }
+.dashboard footer { text-align: center; font-size: 10px; color: #8b9780; margin: 20px 0; line-height: 1.7; }
+.dashboard-error { background: #fbeade; color: #883f2e; border-radius: 8px; padding: 12px; font-size: 13px; }
+@media (max-width: 950px) { .dashboard { padding: 24px; } .shop-grid { grid-template-columns: 1fr; } .shop-grid aside { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } .refill-banner { flex-wrap: wrap; } .call-link { margin-left: 60px; } }
+@media (max-width: 620px) { .dashboard { padding: 16px; } .demo-label { display: none; } .shop-header { align-items: flex-start; flex-direction: column; } .day-label { text-align: left; } .metrics { gap: 8px; } .metrics article { padding: 14px 10px; } .metrics article>span { font-size: 10px; min-height: 26px; } .metrics strong { font-size: 28px; } .metrics small { font-size: 9px; } .shop-grid aside { display: block; } .dashboard section { padding: 16px; } .appointment { gap: 8px; } .appointment-time { flex-basis: 62px; font-size: 11px; } .appointment-person { font-size: 11px; } .badge { font-size: 8px; } .cancel-button { font-size: 9px !important; } .refill-banner h2 { font-size: 15px; } }

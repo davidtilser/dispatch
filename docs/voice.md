@@ -7,8 +7,10 @@ English conversation with ElevenLabs over WebRTC. No Twilio, telephone number, o
 1. Run `npm ci` from the repository root (Node 24).
 2. Copy `.env.example` to `.env` if it does not exist. Set `ELEVENLABS_API_KEY` to a key with Agents and Tools permissions. Keep it out of chat and Git.
 3. Run `npm run voice:setup`. It creates three client tools and a private English agent, then saves `ELEVENLABS_AGENT_ID` to `.env`. Existing agent IDs are left unchanged; tool IDs are saved for resuming partial setup.
-4. Run (or restart) `npm run dev` and open <http://localhost:5173/voice>.
-5. Click **Accept web call**, allow microphone access, and speak. Use headphones.
+4. Run (or restart) `npm run dev`. Open the shop dashboard at <http://localhost:5173> and the call page at <http://localhost:5173/voice> side by side.
+5. Reset the demo and cancel Chris’s 3:00 PM appointment on the dashboard. Then click **Accept call · Jordan** on the call page, allow the microphone, and speak. Use headphones.
+
+If an ElevenLabs agent already works, reuse its ID and skip agent creation.
 
 The setup uses ElevenLabs' default voice/LLM. You can change them in the ElevenLabs dashboard. The agent receives shop/customer/appointment information via dynamic variables. There is a five-minute conversation cap. API keys remain on the backend; the browser receives only a conversation token.
 
@@ -22,13 +24,17 @@ For a phone, expose Vite port 5173 through an HTTPS tunnel and allow that hostna
 - “No thanks.” → `decline_slot`; fee remains pending.
 - End a call without accepting → no booking. Ending after an acceptance preserves the booking.
 
-The mock appointment is tomorrow in America/Los_Angeles, at Apblendzz, for Jordan: a $45 haircut. Available times are 15:00, 15:30 and 16:00. Each new conversation has an independent mock cancelled slot so the voice owner can iterate without the manager. There is no real cancellation, payment processing, or shared waitlist yet. In-memory sessions disappear on API restart and are pruned after an hour when another session is created.
+The demo calendar is September 19, 2026, America/Los_Angeles, at Apblendzz. The manager selects the customer from SQLite's waitlist. For the 15:00 cancellation, 15:30 is available; 16:00 is unavailable because the 45-minute service would overlap a 16:30 appointment. Every call uses the same calendar as the shop dashboard. See [the exact flow and reset behavior](../README.md#exact-demo-flow).
+
+The manager's `CallRequest` supplies customer/shop/slot variables and the call brief. The browser forwards that brief as a contextual update using the existing SDK; WebRTC transport and the configured ElevenLabs agent stay unchanged. Booking tools return to the manager and shared repository. A second browser cannot start a concurrent call, and ending a call without acceptance advances the waitlist without creating a booking.
 
 ## Files and handoff
 
 - `packages/voice/src/agent-config.ts`: English prompt and client tool definitions.
 - `packages/voice/src/elevenlabs.ts`: backend-only WebRTC token adapter.
-- `packages/voice/src/demo.ts`: isolated mock booking state; integration seam for Lucas's manager.
+- `packages/data/src/sqlite.ts`: shared demo booking/calendar persistence.
+- `apps/api/src/refill/demo-coordinator.ts`: serializes API mutations around Lucas’s manager.
+- `packages/voice/src/demo.ts`: dynamic-variable helper and legacy isolated fixture (unused by the app).
 - `apps/api/src/voice`: NestJS routes and service.
 - `apps/web/src/voice`: customer call UI, transcript, and client tool handlers.
 - `packages/contracts/src/voice.ts`: shared request validation and response types.
@@ -36,7 +42,7 @@ The mock appointment is tomorrow in America/Los_Angeles, at Apblendzz, for Jorda
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /api/voice/config` | Read setup status and demo context, never secrets |
-| `POST /api/voice/sessions` | Create WebRTC token and isolated demo session |
+| `POST /api/voice/sessions` | Claim the current manager offer and create WebRTC token |
 | `GET /api/voice/sessions/:id` | Observe demo booking/fee state |
 | `POST /api/voice/sessions/:id/check-availability` | `{ "time": "15:30" }` |
 | `POST /api/voice/sessions/:id/accept` | `{ "time": "15:30" }`; idempotent for the same acceptance |
@@ -45,7 +51,7 @@ The mock appointment is tomorrow in America/Los_Angeles, at Apblendzz, for Jorda
 
 Client tools are `check_availability`, `accept_slot`, and `decline_slot`. The first two require a string `time` in local HH:mm format. All three must have **Wait for response** enabled. Browser handlers add `ok: true` to successful API results and return `ok: false` for errors; the agent must never confirm a failed booking.
 
-For integration, replace VoiceService's mock store with calls to the manager and booking repository, and create context from the selected waitlist contact. Preserve run/attempt IDs. Browser transport needs a participant to open the page and click Accept; the original telephony `VoiceGateway.startCall` contract is reserved for a future phone adapter. Do not mark a booking successful merely because the voice session connected or ended. A browser disconnect is not evidence of a refusal. Add provider webhooks for durable completion handling if needed later; the current demo relies on the open browser.
+The integrated app preserves manager run/attempt IDs. Browser transport needs a participant to open the page and click Accept. Do not mark a booking successful merely because the voice session connected or ended. A browser disconnect is not evidence of a refusal: it is recorded as no answer, and the fee stays pending. The demo relies on the open browser; use Reset after a crashed browser leaves a call claimed. API restarts retain SQLite bookings but restart unfinished manager offers. There are no provider webhooks or real phone calls in this demo.
 
 ## Nebius
 

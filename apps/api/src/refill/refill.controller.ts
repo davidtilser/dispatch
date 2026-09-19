@@ -1,3 +1,5 @@
+import { callOutcomeSchema } from '@dispatch/contracts';
+import { DemoCoordinator } from './demo-coordinator.js';
 import {
   BadRequestException,
   Body,
@@ -16,6 +18,7 @@ import { MANAGER, VOICE } from './tokens.js';
 @Controller()
 export class RefillController {
   constructor(
+    private readonly demo: DemoCoordinator,
     @Inject(MANAGER) private readonly manager: DispatchManager,
     @Inject(VOICE) private readonly voice: unknown,
   ) {}
@@ -23,7 +26,7 @@ export class RefillController {
   // POST /api/slots/:slotId/cancel  -> starts calling the waitlist
   @Post('slots/:slotId/cancel')
   async cancel(@Param('slotId') slotId: string) {
-    return this.manager.startRefill(slotId);
+    return this.demo.cancel(slotId);
   }
 
   // GET /api/refills/:runId  -> dashboard polls this
@@ -39,9 +42,14 @@ export class RefillController {
   // Demo/testing only: pretends the active call ended with this outcome.
   @Post('refills/:runId/simulate')
   async simulate(@Param('runId') runId: string, @Body() outcome: CallOutcome) {
-    const run = await this.manager.getRun(runId);
-    if (!run) throw new NotFoundException(`No run ${runId}`);
-    if (!run.activeAttemptId) throw new BadRequestException('No call in progress');
-    return this.manager.recordCallOutcome({ runId, attemptId: run.activeAttemptId, outcome });
+    const parsed = callOutcomeSchema.safeParse(outcome);
+    if (!parsed.success) throw new BadRequestException('Invalid call outcome');
+    return this.demo.simulate(runId, parsed.data);
   }
+
+  @Get('demo/dashboard')
+  dashboard() { return this.demo.dashboard(); }
+
+  @Post('demo/reset')
+  reset() { return this.demo.reset(); }
 }

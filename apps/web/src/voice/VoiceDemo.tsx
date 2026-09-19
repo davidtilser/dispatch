@@ -29,15 +29,41 @@ export function VoiceDemo() {
 
   useEffect(() => {
     let mounted = true;
-    void api<VoiceDemoConfiguration>('config').then((value) => { if (mounted) setConfig(value); })
+    const refresh = () => void api<VoiceDemoConfiguration>('config').then((value) => { if (mounted) setConfig(value); })
       .catch((err: Error) => { if (mounted) setError(err.message); });
+    refresh();
+    const timer = setInterval(refresh, 1000);
     return () => {
-      mounted = false;
+      mounted = false; clearInterval(timer);
       if (current.current) current.current.cancelled = true;
       void connection.current?.endSession();
       if (current.current?.id) void api(`sessions/${current.current.id}/end`, { reason: 'ended' }).catch(() => {});
     };
   }, []);
+
+  useEffect(() => {
+    if (status === 'disconnected') setSession(undefined);
+  }, [config?.attemptId]);
+
+  useEffect(() => {
+    const close = () => {
+      const id = current.current?.id;
+      if (id) navigator.sendBeacon(`/api/voice/sessions/${id}/end`, new Blob([JSON.stringify({ reason: 'ended' })], { type: 'application/json' }));
+    };
+    window.addEventListener('pagehide', close);
+    return () => window.removeEventListener('pagehide', close);
+  }, []);
+
+  useEffect(() => {
+    if (!session?.id || status !== 'connected') return;
+    const timer = setInterval(() => {
+      void api<VoiceDemoSession>(`sessions/${session.id}`).catch(() => {
+        setError('The demo was reset or the API is unavailable. Ending this call.');
+        void connection.current?.endSession();
+      });
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [session?.id, status]);
 
   async function start() {
     if (busy.current || connection.current) return;
@@ -55,7 +81,7 @@ export function VoiceDemo() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
       if (!isCurrent()) return;
-      const prepared = await api<VoiceSessionStart>('sessions', {});
+      const prepared = await api<VoiceSessionStart>('sessions', { attemptId: config?.attemptId });
       attempt.id = prepared.session.id;
       if (!isCurrent()) { await api(`sessions/${attempt.id}/end`, { reason: 'ended' }); return; }
       setSession(prepared.session);
@@ -101,7 +127,10 @@ export function VoiceDemo() {
       });
       if (!isCurrent()) { await connected.endSession(); return; }
       // The provider can disconnect while startSession is resolving.
-      if (!attempt.closed) { connection.current = connected; busy.current = false; }
+      if (!attempt.closed) {
+        connection.current = connected; busy.current = false;
+        if (prepared.session.managerBrief) connected.sendContextualUpdate(`The Dispatch manager prepared this call brief for the selected waitlist customer: ${JSON.stringify(prepared.session.managerBrief)}. Use booking tools to verify availability and confirm any booking.`);
+      }
     } catch (err) {
       if (attempt.id) {
         await api<VoiceDemoSession>(`sessions/${attempt.id}/end`, { reason: 'failed' })
@@ -127,15 +156,16 @@ export function VoiceDemo() {
     setMuted(!muted);
   }
 
-  const context = session?.context ?? config?.context;
+  const context = status !== 'disconnected' ? session?.context ?? config?.context : config?.context ?? session?.context;
   return <main className="voice-demo">
     <nav><a href="/">← Dispatch</a><span>LIVE VOICE LAB</span></nav>
     <header><p className="eyebrow">ONE OPEN SLOT. ONE CONVERSATION.</p>
       <h1>Let’s fill that spot.</h1>
-      <p>Talk to Dispatch in English. Ask for 3:30, accept the appointment, or say no.</p>
+      <p>You are the waitlist customer. Talk to Dispatch in English, agree to a time, or decline the offer.</p>
     </header>
 
     {!config && !error && <p role="status">Checking voice setup…</p>}
+    {config && !config.attemptId && <aside className="setup-note">Cancel an appointment on the <a href="/" target="_blank" rel="noreferrer">shop dashboard</a> to prepare a waitlist call. This page updates automatically.</aside>}
     {config && !config.configured && <aside className="setup-note">
       <strong>Connect ElevenLabs to start</strong>
       <p>Set <code>ELEVENLABS_API_KEY</code> in your root <code>.env</code>, run <code>npm run voice:setup</code>, then restart the API and reload this page.</p>
@@ -146,10 +176,10 @@ export function VoiceDemo() {
     <div className="voice-grid">
       <section className="call-card">
         <div className={`voice-orb ${status === 'connected' ? 'live' : ''} ${speaking ? 'speaking' : ''}`} aria-hidden="true">D</div>
-        <h2>{status === 'connected' ? (speaking ? 'Dispatch is speaking' : 'Your turn, Jordan') : status === 'connecting' ? 'Connecting…' : status === 'disconnecting' ? 'Ending call…' : 'Your appointment is calling'}</h2>
+        <h2>{status === 'connected' ? (speaking ? 'Dispatch is speaking' : `Your turn, ${session?.context.customerName ?? 'friend'}`) : status === 'connecting' ? 'Connecting…' : status === 'disconnecting' ? 'Ending call…' : 'Your appointment is calling'}</h2>
         <p aria-live="polite">{status === 'connected' ? (muted ? 'Microphone muted' : 'Microphone on · Live AI conversation') : 'Browser audio · No phone number needed'}</p>
         <div className="call-actions">
-          {status === 'disconnected' ? <button disabled={!config?.configured} onClick={() => void start()}>{session ? 'Start another demo' : 'Accept web call'}</button> : <>
+          {status === 'disconnected' ? <button disabled={!config?.configured || !config?.attemptId || config.callActive} onClick={() => void start()}>{config?.callActive ? 'A web call is already open' : config?.context ? `Accept call · ${config.context.customerName.split(' ')[0]}` : 'Waiting for a cancellation'}</button> : <>
             <button className="secondary" disabled={status !== 'connected'} onClick={toggleMute}>{muted ? 'Unmute' : 'Mute'}</button>
             <button className="end-call" disabled={status !== 'connected'} onClick={() => void end()}>End call</button>
           </>}
@@ -159,12 +189,12 @@ export function VoiceDemo() {
 
       <section className="booking-card">
         <p className="eyebrow">MOCK CALENDAR</p><h2>{context?.businessName ?? 'Apblendzz'}</h2>
-        {context && <><p>{context.service} · {context.price} · {context.date}</p><p>Offered: <strong>3:00 PM</strong><br />Alternatives: 3:30 PM or 4:00 PM<br /><small>{context.timezone}</small></p></>}
+        {context && <><p>{context.service} · {context.price} · {context.date}</p><p>Offered: <strong>{context.offeredTime}</strong><br />Available starts: {context.availableTimes.join(', ')}<br /><small>{context.timezone}</small></p></>}
         <div className={`booking-result ${session?.feeWaived ? 'filled' : ''}`} aria-live="polite">
           <strong>{session?.booking ? `Booked for ${session.booking.time}` : session?.status === 'declined' ? 'Offer declined' : session?.status === 'ended' || session?.status === 'failed' ? 'Call ended without a booking' : 'Waiting for an acceptance'}</strong>
           <p>Cancellation fee: <b>{session?.feeWaived ? 'Waived' : 'Pending'}</b></p>
         </div>
-        <small>Each call starts a separate demo slot. Calendar, waitlist and fee changes are simulated.</small>
+        <small>This call updates the same demo calendar as the shop dashboard. Booking and fee changes are simulated.</small>
       </section>
     </div>
 

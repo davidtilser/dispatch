@@ -54,3 +54,10 @@ export interface RefillRun {
   activeAttemptId?: string;
   feeWaived: boolean;
 }
+export * from './dashboard.js';
+
+export const callOutcomeSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('accepted'), startsAt: z.string().datetime({ offset: true }) }),
+  z.object({ type: z.literal('declined') }), z.object({ type: z.literal('no_answer') }),
+  z.object({ type: z.literal('failed'), reason: z.string() }),
+]);

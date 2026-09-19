@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
   BookingSlot,
   BusinessProfile,
@@ -84,7 +85,7 @@ interface RunState {
 
 export class DispatchManager implements ManagerAgent {
   private readonly runs = new Map<string, RunState>();
-  private runCounter = 0;
+  reset(): void { this.runs.clear(); }
 
   constructor(private readonly deps: ManagerDeps) {}
 
@@ -105,7 +106,7 @@ export class DispatchManager implements ManagerAgent {
     const waitlist = await this.deps.bookings.getWaitlist(slot.businessId);
 
     const state: RunState = {
-      run: { id: `run_${++this.runCounter}`, slotId, status: 'pending', feeWaived: false },
+      run: { id: `run_${randomUUID()}`, slotId, status: 'pending', feeWaived: false },
       slot,
       business,
       waitlist,

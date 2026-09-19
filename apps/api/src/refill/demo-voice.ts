@@ -1,14 +1,15 @@
 import type { CallRequest } from '@dispatch/contracts';
 import type { ManagerVoice } from '@dispatch/agents';
 
-// TEMPORARY stand-in until packages/voice ships the ElevenLabs adapter.
-// "Places" a call by logging it. Drive outcomes with POST /api/refills/:runId/simulate.
+// The manager prepares one browser-call offer; the participant manually accepts it.
+// VoiceService turns this CallRequest into an ElevenLabs WebRTC session.
 export class DemoVoice implements ManagerVoice {
+  constructor(private readonly log: (message: string) => void = () => {}) {}
   readonly calls: CallRequest[] = [];
 
   async startCall(input: CallRequest) {
     this.calls.push(input);
-    console.log(`[demo voice] calling ${input.contact.name}: ${input.brief?.offer ?? '(no brief)'}`);
+    this.log(`Agent offered ${input.slot.service} to ${input.contact.name}. Ready for a manual web call.`);
     return { conversationId: `demo_${input.attemptId}` };
   }
 

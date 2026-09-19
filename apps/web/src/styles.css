@@ -1,4 +1,6 @@
-:root { font-family: system-ui, sans-serif; color: #182b29; background: #f5f7f4; }
+@import '../../../docs/design/palette.css';
+
+:root { font-family: system-ui, sans-serif; color: var(--deep-navy); background: #f9f7ee; }
 body { margin: 0; }
 main { max-width: 760px; margin: 9vh auto; padding: 24px; }
 h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -.04em; }

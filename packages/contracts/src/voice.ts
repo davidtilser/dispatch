@@ -1,3 +1,4 @@
+import type { CallBrief } from './index.js';
 import { z } from 'zod';
 
 export const voiceTimeSchema = z.object({ time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:mm, for example 15:30') });
@@ -17,6 +18,7 @@ export interface VoiceDemoContext {
 export interface VoiceDemoSession {
   id: string;
   context: VoiceDemoContext;
+  managerBrief?: CallBrief;
   status: 'active' | 'accepted' | 'declined' | 'ended' | 'failed';
   booking?: { id: string; time: string };
   feeWaived: boolean;
@@ -31,5 +33,7 @@ export interface VoiceSessionStart {
 export interface VoiceDemoConfiguration {
   configured: boolean;
   missing: string[];
-  context: VoiceDemoContext;
+  context: VoiceDemoContext | null;
+  attemptId: string | null;
+  callActive: boolean;
 }

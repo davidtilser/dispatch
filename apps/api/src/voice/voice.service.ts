@@ -1,38 +1,35 @@
-import { BadGatewayException, ConflictException, Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { demoContext, dynamicVariables, ElevenLabsWebVoice, VoiceDemoStore, VoiceSessionError } from '@dispatch/voice';
+import { BadGatewayException, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { dynamicVariables, ElevenLabsWebVoice } from '@dispatch/voice';
 import type { VoiceDemoConfiguration, VoiceSessionStart } from '@dispatch/contracts';
+import { DemoCoordinator } from '../refill/demo-coordinator.js';
 
 @Injectable()
 export class VoiceService {
-  private store = new VoiceDemoStore();
+  constructor(private readonly demo: DemoCoordinator) {}
 
-  configuration(): VoiceDemoConfiguration {
+  async configuration(): Promise<VoiceDemoConfiguration> {
     const missing = ['ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID'].filter((key) => !process.env[key]?.trim());
-    return { configured: missing.length === 0, missing, context: demoContext() };
+    return { configured: missing.length === 0, missing, ...await this.demo.configuration() };
   }
 
-  async start(): Promise<VoiceSessionStart> {
-    const config = this.configuration();
-    if (!config.configured) throw new ServiceUnavailableException(`Set ${config.missing.join(', ')} in .env. Run npm run voice:setup to create the agent.`);
+  async start(attemptId?: string): Promise<VoiceSessionStart> {
+    const config = await this.configuration();
+    if (!config.configured) throw new ServiceUnavailableException(`Set ${config.missing.join(', ')} in .env.`);
+    const session = await this.demo.createSession(attemptId);
     const voice = new ElevenLabsWebVoice(process.env.ELEVENLABS_API_KEY!, process.env.ELEVENLABS_AGENT_ID!);
-    let conversationToken: string;
-    try { conversationToken = await voice.createToken(); }
-    catch (error) { throw new BadGatewayException(error instanceof Error ? error.message : 'ElevenLabs unavailable'); }
-    const session = this.perform(() => this.store.create(config.context));
-    return { session, conversationToken, dynamicVariables: dynamicVariables(config.context) };
-  }
-
-  get(id: string) { return this.perform(() => this.store.get(id)); }
-  check(id: string, time: string) { return this.perform(() => this.store.check(id, time)); }
-  accept(id: string, time: string) { return this.perform(() => this.store.accept(id, time)); }
-  decline(id: string) { return this.perform(() => this.store.decline(id)); }
-  end(id: string, reason: 'ended' | 'failed') { return this.perform(() => this.store.end(id, reason)); }
-
-  private perform<T>(fn: () => T): T {
-    try { return fn(); }
-    catch (error) {
-      if (error instanceof VoiceSessionError) throw new ConflictException(error.message);
-      throw error;
+    try {
+      const conversationToken = await voice.createToken();
+      // Reset/end during token creation must not return a usable stale offer.
+      if ((await this.demo.get(session.id)).status !== 'active') throw new Error('The offer ended before voice connected.');
+      return { session, conversationToken, dynamicVariables: dynamicVariables(session.context) };
+    } catch (error) {
+      await this.demo.end(session.id, 'failed').catch(() => {});
+      throw new BadGatewayException(error instanceof Error ? error.message : 'ElevenLabs unavailable');
     }
   }
+  get(id: string) { return this.demo.get(id); }
+  check(id: string, time: string) { return this.demo.check(id, time); }
+  accept(id: string, time: string) { return this.demo.accept(id, time); }
+  decline(id: string) { return this.demo.end(id, 'declined'); }
+  end(id: string, reason: 'ended' | 'failed') { return this.demo.end(id, reason); }
 }

@@ -10,3 +10,7 @@ coverage/
 .venv/
 .env
 __pycache__/
+.demo/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
