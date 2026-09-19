@@ -5,6 +5,7 @@ import { AppHeader } from './AppHeader';
 import './dashboard.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AnimatedMoney, DispatchOrbit, Signal } from './MotionUI';
+import { LiveRefill } from './refill/LiveRefill';
 
 const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
@@ -57,7 +58,7 @@ export function App() {
     timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric',
   });
 
-  return <main className="dashboard">
+  return <main className={`dashboard ${data?.run ? 'refill-live' : ''}`}>
     <AppHeader view="shop" onReset={() => void action('demo/reset')} resetDisabled={busy || !data} />
     <header className="shop-header">
       <div className="shop-intro">
@@ -74,6 +75,8 @@ export function App() {
     </div></div>
 
     {error && <p role="alert" className="dashboard-error">{error} <button className="quiet" onClick={() => { setError(''); void refresh().catch(() => setError('API unavailable')); }}>Retry</button></p>}
+
+    {data && <LiveRefill data={data} busy={busy} onCancel={slotId => void action(`slots/${slotId}/cancel`)} />}
 
     <div className="metrics">
       <article className="revenue-metric"><div className="metric-label"><span>Recovered revenue</span><DollarSign size={17} aria-hidden="true" /></div><strong><AnimatedMoney cents={recovered} /></strong><small>From replacement bookings</small></article>
@@ -103,8 +106,8 @@ export function App() {
           {!data && <p role="status">Loading calendar…</p>}
           <AnimatePresence initial={false}>{data?.bookings.map(b => <motion.article layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }} key={b.id} className={`appointment ${b.status}`}>
             <div className="appointment-main">
-              <div className="appointment-time"><Clock3 size={17} aria-hidden="true" /><strong>{time(b.startsAt)}</strong></div>
-              <div className="appointment-person"><div className="person-heading"><strong>{b.customerName}</strong><span className={`badge ${b.status}`}>{b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}</span></div><span>{b.service} · {b.durationMinutes} min · {money(b.priceCents)}</span>{b.status === 'replacement' && <small className="fee-waived"><Check size={12} aria-hidden="true" />Booked by Dispatch</small>}</div>
+              <div className="appointment-time"><Clock3 size={17} aria-hidden="true" /><strong>{time(b.startsAt)}</strong>{new Date(b.startsAt).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) !== data?.date && <small>{new Date(b.startsAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric' })}</small>}</div>
+              <div className="appointment-person"><div className="person-heading"><strong>{b.customerName}</strong><span className={`badge ${b.status}`}>{b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : b.status === 'alternative' ? 'Separate booking' : 'Confirmed'}</span></div><span>{b.service} · {b.durationMinutes} min · {money(b.priceCents)}</span>{b.status === 'replacement' && <small className="fee-waived"><Check size={12} aria-hidden="true" />Booked by Dispatch</small>}</div>
             </div>
             <div className="appointment-actions">
               {b.status === 'cancelled' && <div className={`fee-status ${b.feeStatus === 'waived' ? 'fee-waived' : ''}`}><strong>{b.feeStatus === 'waived' ? <ShieldCheck size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}{money(b.cancellationFeeCents)} fee {b.feeStatus === 'waived' ? 'waived' : 'pending'}</strong><small>{b.feeStatus === 'waived' ? 'Spot refilled from the waitlist' : 'Waived when this spot is filled'}</small></div>}
@@ -121,9 +124,10 @@ export function App() {
           <p className="section-subtitle">Called in order. First acceptance wins.</p>
           <div className="waitlist-list">{data?.waitlist.map((c, i) => {
             const active = data.offer?.customerName === c.name;
+            const alternate = data.bookings.find(b => b.customerId === c.id && b.status === 'alternative');
             return <div className={`waitlist-person ${active ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`} key={c.id}>
               <span className="queue-number">{String(i + 1).padStart(2, '0')}</span>
-              <div><strong>{c.name}</strong><small>{c.status === 'booked' ? 'Replacement booked' : active ? 'Current candidate' : `Waitlist · ${i + 1}`}</small></div>
+              <div><strong>{c.name}</strong><small>{c.status === 'booked' ? alternate ? 'Separate appointment booked' : 'Replacement booked' : active ? 'Current candidate' : `Waitlist · ${i + 1}`}</small></div>
               <span className={`queue-status ${active ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`}>{c.status === 'booked' ? <><Check size={11} aria-hidden="true" />Booked</> : active ? <><PhoneCall size={11} aria-hidden="true" />{data.offer?.sessionActive ? 'In call' : 'Up next'}</> : 'Waiting'}</span>
             </div>;
           })}</div>

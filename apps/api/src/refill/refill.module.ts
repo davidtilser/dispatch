@@ -16,7 +16,7 @@ import { BOOKINGS, MANAGER, VOICE } from './tokens.js';
     DemoCoordinator,
     // Shared SQLite calendar and manually accepted browser-call offers.
     { provide: BOOKINGS, useFactory: () => new SqliteBookings(process.env.DEMO_DB_PATH ?? fileURLToPath(new URL('../../../../.demo/dispatch.sqlite', import.meta.url))) },
-    { provide: VOICE, inject: [BOOKINGS], useFactory: (bookings: SqliteBookings) => new DemoVoice(message => bookings.log(message)) },
+    { provide: VOICE, inject: [BOOKINGS], useFactory: (bookings: SqliteBookings) => new DemoVoice((message, action) => bookings.log(message, action)) },
     {
       provide: MANAGER,
       inject: [BusinessStore, BOOKINGS, VOICE],

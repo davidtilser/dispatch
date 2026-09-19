@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { BookingRepository } from './index.js';
-import type { DemoBooking, DemoDashboard, DemoEvent } from '@dispatch/contracts';
+import type { DemoAction, DemoBooking, DemoDashboard, DemoEvent } from '@dispatch/contracts';
 
 export const TIMEZONE = 'America/Los_Angeles';
 
@@ -40,6 +40,10 @@ export class SqliteBookings implements BookingRepository {
     this.db.exec(`CREATE TABLE IF NOT EXISTS clients (id TEXT PRIMARY KEY, name TEXT, phone TEXT, waitlist INTEGER, booked INTEGER DEFAULT 0);
       CREATE TABLE IF NOT EXISTS bookings (id TEXT PRIMARY KEY, data TEXT NOT NULL, idempotency_key TEXT UNIQUE);
       CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, message TEXT);`);
+    // Additive migration: existing demo databases and their text activity remain usable.
+    if (!this.db.prepare('PRAGMA table_info(events)').all().some(column => column.name === 'action')) {
+      this.db.exec('ALTER TABLE events ADD COLUMN action TEXT');
+    }
     // A database kept from an earlier demo day holds past times; reseed it onto today's demo date.
     const seeded = this.db.prepare('SELECT data FROM bookings LIMIT 1').get();
     const staleDay = !!seeded && !(JSON.parse(String(seeded.data)) as DemoBooking).startsAt.startsWith(DEMO_DATE);
@@ -67,8 +71,15 @@ export class SqliteBookings implements BookingRepository {
   waitlist(): DemoDashboard['waitlist'] {
     return this.db.prepare('SELECT * FROM clients WHERE waitlist = 1 ORDER BY id').all().map(row => ({ id: String(row.id), name: String(row.name), phoneE164: String(row.phone), status: row.booked ? 'booked' : 'waiting' }));
   }
-  events(): DemoEvent[] { return this.db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 80').all() as unknown as DemoEvent[]; }
-  log(message: string) { this.db.prepare('INSERT INTO events (time,message) VALUES (?,?)').run(new Date().toISOString(), message); }
+  events(): DemoEvent[] {
+    return this.db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 80').all().map(row => ({
+      id: Number(row.id), time: String(row.time), message: String(row.message),
+      ...(row.action ? { action: JSON.parse(String(row.action)) as DemoAction } : {}),
+    }));
+  }
+  log(message: string, action?: DemoAction) {
+    this.db.prepare('INSERT INTO events (time,message,action) VALUES (?,?,?)').run(new Date().toISOString(), message, action ? JSON.stringify(action) : null);
+  }
   async getSlot(id: string): Promise<DemoBooking | null> {
     const row = this.db.prepare('SELECT data FROM bookings WHERE id = ?').get(id);
     return row ? JSON.parse(String(row.data)) : null;
@@ -79,7 +90,7 @@ export class SqliteBookings implements BookingRepository {
     if (!slot || slot.status === 'replacement' || slot.feeStatus === 'waived') throw new Error('This booking cannot be cancelled in this demo.');
     if (slot.status === 'cancelled') return;
     this.save({ ...slot, status: 'cancelled', feeStatus: 'pending' });
-    this.log(`${slot.customerName} cancelled ${localTime(slot.startsAt)}. $15 cancellation fee pending refill.`);
+    this.log(`${slot.customerName} cancelled ${localTime(slot.startsAt)}. $${slot.cancellationFeeCents / 100} cancellation fee pending refill.`, { kind: 'cancelled', source: 'calendar', slotId: id, customerName: slot.customerName, startsAt: slot.startsAt, durationMinutes: slot.durationMinutes });
   }
   async availableTimes(id: string) {
     const slot = await this.getSlot(id);
@@ -89,13 +100,20 @@ export class SqliteBookings implements BookingRepository {
     for (const candidate of candidates) if (await this.isAvailable(id, candidate)) available.push(candidate);
     return available;
   }
-  async isAvailable(id: string, startsAt: string) {
+  async availability(id: string, startsAt: string) {
     const slot = await this.getSlot(id);
-    if (!slot || slot.status !== 'cancelled' || slot.feeStatus === 'waived') return false;
+    if (!slot || slot.status !== 'cancelled' || slot.feeStatus === 'waived') return { available: false, reason: 'This opening is no longer available.' };
     const start = Date.parse(startsAt), end = start + slot.durationMinutes * 60_000;
+    // Report real overlaps even when a requested start is outside the offered alternatives.
+    const conflict = this.bookings().find(b => b.status !== 'cancelled' && start < Date.parse(b.startsAt) + b.durationMinutes * 60_000 && end > Date.parse(b.startsAt));
+    if (conflict) return { available: false, reason: `Overlaps ${conflict.customerName}’s ${localTime(conflict.startsAt)} booking.`,
+      conflict: { bookingId: conflict.id, customerName: conflict.customerName, startsAt: conflict.startsAt, durationMinutes: conflict.durationMinutes } };
     const delta = start - Date.parse(slot.startsAt);
-    if (![0, 30 * 60_000].includes(delta) || start < Date.parse(demoTime('09:00')) || end > Date.parse(demoTime('18:00'))) return false;
-    return !this.bookings().some(b => b.status !== 'cancelled' && start < Date.parse(b.startsAt) + b.durationMinutes * 60_000 && end > Date.parse(b.startsAt));
+    if (![0, 30 * 60_000].includes(delta) || start < Date.parse(demoTime('09:00')) || end > Date.parse(demoTime('18:00'))) return { available: false, reason: 'Outside the available start times for this opening.' };
+    return { available: true, reason: `${slot.durationMinutes} minutes available. No booking made.` };
+  }
+  async isAvailable(id: string, startsAt: string) {
+    return (await this.availability(id, startsAt)).available;
   }
   async bookReplacement(input: { slotId: string; contactId: string; startsAt: string; idempotencyKey: string }) {
     const existing = this.db.prepare('SELECT id FROM bookings WHERE idempotency_key = ?').get(input.idempotencyKey);
@@ -109,7 +127,7 @@ export class SqliteBookings implements BookingRepository {
     try {
       this.save({ ...slot, id: bookingId, startsAt: input.startsAt, customerId: client.id, customerName: client.name, status: 'replacement', feeStatus: 'not_due', replacesSlotId: slot.id }, input.idempotencyKey);
       this.db.prepare('UPDATE clients SET booked = 1 WHERE id = ?').run(client.id);
-      this.log(`Booked ${client.name} at ${localTime(input.startsAt)}. Replacement saved to the demo calendar.`);
+      this.log(`Booked ${client.name} at ${localTime(input.startsAt)}. Replacement saved to the demo calendar.`, { kind: 'booking_saved', source: 'calendar', slotId: slot.id, customerName: client.name, startsAt: input.startsAt, durationMinutes: slot.durationMinutes, bookingId, amountCents: slot.priceCents });
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
     return { bookingId };
@@ -119,7 +137,7 @@ export class SqliteBookings implements BookingRepository {
     if (!slot || !this.bookings().some(b => b.replacesSlotId === id)) throw new Error('A replacement must exist before waiving the fee');
     if (slot.feeStatus === 'waived') return;
     this.save({ ...slot, feeStatus: 'waived' });
-    this.log(`${slot.customerName}’s $15 cancellation fee waived. Slot successfully refilled.`);
+    this.log(`${slot.customerName}’s $${slot.cancellationFeeCents / 100} cancellation fee waived. Slot successfully refilled.`, { kind: 'fee_waived', source: 'calendar', slotId: id, customerName: slot.customerName, amountCents: slot.cancellationFeeCents });
   }
   private save(booking: DemoBooking, key: string | null = null) {
     this.db.prepare('INSERT INTO bookings (id,data,idempotency_key) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET data = excluded.data').run(booking.id, JSON.stringify(booking), key);

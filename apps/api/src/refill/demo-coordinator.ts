@@ -85,7 +85,7 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
       if ([...this.sessions.values()].some(s => s.connected)) throw new ConflictException('A web call is already active. End it or reset the demo.');
       const value: VoiceDemoSession = { id: randomUUID(), context: await this.context(call), managerBrief: call.brief, status: 'active', feeWaived: false };
       this.sessions.set(value.id, { value, call, connected: true });
-      this.bookings.log(`Web call accepted by ${call.contact.name}. Waiting for explicit booking agreement.`);
+      this.bookings.log(`Browser session opened for ${call.contact.name}. Waiting for booking agreement.`, { kind: 'call_started', source: 'voice_tool', slotId: call.slot.id, customerName: call.contact.name });
       return structuredClone(value);
     });
   }
@@ -103,9 +103,12 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
   check(id: string, time: string) {
     return this.serial(async () => {
       const { call, value } = await this.active(id);
-      const available = await this.bookings.isAvailable(call.slot.id, demoTime(time));
-      this.bookings.log(`Agent checked ${time} for ${call.contact.name}: ${available ? 'available' : 'unavailable'} (${call.slot.durationMinutes} minutes).`);
-      return { available, date: value.context.date, timezone: value.context.timezone, availableTimes: (await this.bookings.availableTimes(call.slot.id)).map(localTime) };
+      const result = await this.bookings.availability(call.slot.id, demoTime(time));
+      this.bookings.log(`Checked ${time} for ${call.contact.name}: ${result.available ? 'available' : 'unavailable'}. ${result.reason}`, {
+        kind: 'availability_checked', source: 'voice_tool', slotId: call.slot.id, customerName: call.contact.name,
+        startsAt: demoTime(time), durationMinutes: call.slot.durationMinutes, ...result,
+      });
+      return { ...result, date: value.context.date, timezone: value.context.timezone, availableTimes: (await this.bookings.availableTimes(call.slot.id)).map(localTime) };
     });
   }
   accept(id: string, time: string) {
@@ -113,7 +116,12 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
       const previous = this.find(id).value;
       if (previous.status === 'accepted' && previous.booking?.time === time) return structuredClone(previous);
       const { call, value } = await this.active(id);
-      if (!await this.bookings.isAvailable(call.slot.id, demoTime(time))) throw new ConflictException('That time is unavailable. Ask for one of the available times.');
+      const availability = await this.bookings.availability(call.slot.id, demoTime(time));
+      this.bookings.log(`Booking requested for ${call.contact.name} at ${time}${availability.available ? '. Awaiting calendar save.' : `: rejected. ${availability.reason}`}`, {
+        kind: 'booking_requested', source: 'voice_tool', slotId: call.slot.id, customerName: call.contact.name,
+        startsAt: demoTime(time), durationMinutes: call.slot.durationMinutes, ...availability,
+      });
+      if (!availability.available) throw new ConflictException('That time is unavailable. Ask for one of the available times.');
       const run = await this.manager.recordCallOutcome({ runId: call.runId, attemptId: call.attemptId, outcome: { type: 'accepted', startsAt: demoTime(time) } });
       const details = await this.manager.getRunDetails(run.id);
       if (run.status !== 'filled' || !details?.bookingId) throw new ConflictException('The booking could not be confirmed.');
@@ -128,7 +136,7 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
       if (reason !== 'declined') entry.connected = false;
       if (value.status !== 'active') return structuredClone(value);
       value.status = reason;
-      this.bookings.log(`${call.contact.name}: ${reason === 'declined' ? 'declined the offer' : 'call ended without a booking'}. Fee remains pending.`);
+      this.bookings.log(`${call.contact.name}: ${reason === 'declined' ? 'declined the offer' : 'call ended without a booking'}. Fee remains pending.`, { kind: 'call_ended', source: 'voice_tool', slotId: call.slot.id, customerName: call.contact.name, outcome: reason });
       await this.manager.recordCallOutcome({ runId: call.runId, attemptId: call.attemptId,
         outcome: reason === 'declined' ? { type: 'declined' } : { type: 'no_answer' } });
       return structuredClone(value);
@@ -140,7 +148,7 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
       const run = await this.manager.getRun(runId);
       if (!run?.activeAttemptId) throw new ConflictException('No call in progress');
       if ([...this.sessions.values()].some(s => s.connected)) throw new ConflictException('End the live web call before simulating an outcome.');
-      this.bookings.log(`Simulated call outcome: ${outcome.type}.`);
+      this.bookings.log(`Simulated call outcome: ${outcome.type}.`, { kind: 'simulated_outcome', source: 'simulation', slotId: run.slotId, outcome: outcome.type });
       return this.manager.recordCallOutcome({ runId, attemptId: run.activeAttemptId, outcome });
     });
   }

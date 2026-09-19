@@ -3,9 +3,11 @@ import { VoiceConversation } from '@elevenlabs/react';
 import type { VoiceDemoConfiguration, VoiceDemoSession, VoiceSessionStart } from '@dispatch/contracts';
 import { useRingtone } from './useRingtone';
 import { AppHeader } from '../AppHeader';
-import { CalendarDays, MessagesSquare } from 'lucide-react';
+import { MessagesSquare } from 'lucide-react';
 import './voice.css';
 import { Signal } from '../MotionUI';
+import { LiveRefill } from '../refill/LiveRefill';
+import { useLiveDashboard } from '../refill/useLiveDashboard';
 
 // Long enough for a one-line goodbye, short enough that the demo never stalls.
 const GOODBYE_MS = 8000;
@@ -23,6 +25,8 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export function VoiceDemo() {
+  const dashboard = useLiveDashboard();
+  const previousRun = useRef<string | null>(null);
   const [config, setConfig] = useState<VoiceDemoConfiguration>();
   const [session, setSession] = useState<VoiceDemoSession>();
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'disconnecting'>('disconnected');
@@ -39,6 +43,19 @@ export function VoiceDemo() {
   const incomingOffer = status === 'disconnected' && config?.configured && !config.callActive
     && config.attemptId !== answeredOffer ? config?.attemptId ?? null : null;
   const ringtone = useRingtone(incomingOffer);
+
+  useEffect(() => {
+    if (!dashboard.data) return;
+    const runId = dashboard.data.run?.id ?? null;
+    if (previousRun.current && previousRun.current !== runId) {
+      setMessages([]); setSession(undefined); setAnsweredOffer(null); setElapsed(0); setError('');
+      if (hangup.current) { clearTimeout(hangup.current); hangup.current = null; }
+      if (current.current) current.current.cancelled = true;
+      void connection.current?.endSession();
+      connection.current = null; busy.current = false; setStatus('disconnected');
+    }
+    previousRun.current = runId;
+  }, [dashboard.data]);
 
   useEffect(() => {
     if (status !== 'connected') return;
@@ -196,7 +213,7 @@ export function VoiceDemo() {
     </header>
 
     {!config && !error && <p role="status">Checking voice setup…</p>}
-    {config && !config.attemptId && <aside className="setup-note">Cancel an appointment on the <a href="/" target="_blank" rel="noreferrer">shop dashboard</a> to prepare a waitlist call. This page updates automatically.</aside>}
+    {config && !config.attemptId && !dashboard.data?.run && <aside className="setup-note">Cancel an appointment on the <a href="/" target="_blank" rel="noreferrer">shop dashboard</a> to prepare a waitlist call. This page updates automatically.</aside>}
     {config && !config.configured && <aside className="setup-note">
       <strong>Connect ElevenLabs to start</strong>
       <p>Set <code>ELEVENLABS_API_KEY</code> in your root <code>.env</code>, run <code>npm run voice:setup</code>, then restart the API and reload this page.</p>
@@ -204,7 +221,9 @@ export function VoiceDemo() {
     </aside>}
     {error && <p className="voice-error" role="alert">{error}</p>}
 
+    {dashboard.error && <p role="alert" className="voice-error">{dashboard.error}</p>}
     <div className="voice-grid">
+      <div className="voice-call-column">
       <section className={`call-card ${incomingOffer ? 'incoming-call' : ''}`}>
         <div className="call-topline"><span className="call-status" role="status">{incomingOffer ? 'Incoming call' : status === 'connected' ? 'Connected' : status === 'connecting' ? 'Connecting' : status === 'disconnecting' ? 'Ending call' : 'Ready when you are'}</span><button className="ringtone-toggle" onClick={() => ringtone.enabled ? ringtone.disable() : void ringtone.enable()} aria-pressed={ringtone.enabled}>{ringtone.enabled ? '♫ Ringtone on' : '♫ Enable ringtone'}</button></div>
         <div className="caller-portrait" aria-hidden="true"><span className="ring-wave wave-one" /><span className="ring-wave wave-two" /><div className={`voice-orb ${status === 'connected' ? 'live' : ''} ${speaking ? 'speaking' : ''}`}><Signal active={status === 'connected' && speaking} /></div><span className="caller-phone"><PhoneIcon /></span></div>
@@ -212,6 +231,7 @@ export function VoiceDemo() {
         <h2 className="caller-name">{context?.businessName ?? 'Dispatch'}</h2>
         <p className="caller-detail" aria-live="polite">{incomingOffer ? `Calling ${context?.customerName ?? 'you'} about an open appointment` : status === 'connected' ? (speaking ? 'Dispatch is speaking…' : muted ? 'Microphone muted' : `Listening to ${session?.context.customerName ?? 'you'}…`) : status === 'connecting' ? 'Opening your secure audio connection…' : status === 'disconnecting' ? 'Finishing your call…' : config?.callActive ? 'A call is open in another window' : 'Your next appointment starts with a conversation.'}</p>
         {status === 'connected' ? <div className="call-duration"><span className="connection-dot" />{String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}</div> : <div className="call-duration">{incomingOffer ? 'WEB AUDIO CALL' : 'BROWSER AUDIO · NO PHONE NUMBER NEEDED'}</div>}
+        {context && <p className="refill-call-context">{context.service} · {context.price} · {context.date}<br />Offered {context.offeredTime} · {context.timezone}{context.discount && <><br />{context.discount}</>}</p>}
         <div className="call-actions">
           {status === 'disconnected' ? <>
             {incomingOffer && <button className="silence-call" disabled={!ringtone.ringing} onClick={ringtone.silence}>Silence</button>}
@@ -224,22 +244,15 @@ export function VoiceDemo() {
         <small>{ringtone.audioError || (!ringtone.enabled && status === 'disconnected' ? 'Enable ringtone once to hear incoming calls in this tab.' : 'Use headphones for the clearest conversation.')}</small>
       </section>
 
-      <section className="booking-card">
-        <p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Appointment details</p><h2>{context?.businessName ?? 'Apblendzz'}</h2>
-        {context && <><p>{context.service} · {context.price} · {context.date}</p><p>Offered: <strong>{context.offeredTime}</strong><br />Available starts: {context.availableTimes.join(', ')}<br /><small>{context.timezone}</small></p></>}
-        <div className={`booking-result ${session?.feeWaived ? 'filled' : ''}`} aria-live="polite">
-          <strong>{session?.booking ? `Booked for ${session.booking.time}` : session?.status === 'declined' ? 'Offer declined' : session?.status === 'ended' || session?.status === 'failed' ? 'Call ended without a booking' : 'Waiting for an acceptance'}</strong>
-          <p>Cancellation fee: <b>{session?.feeWaived ? 'Waived' : 'Pending'}</b></p>
-        </div>
-        <small>This call updates the same demo calendar as the shop dashboard. Booking and fee changes are simulated.</small>
-      </section>
-    </div>
-
     <section className="transcript-card"><p className="eyebrow"><MessagesSquare size={14} aria-hidden="true" />Live transcript</p><h2>Conversation</h2>
       <div className="transcript" role="log" aria-live="polite">
         {messages.length ? messages.map((item, index) => <p key={index}><strong>{item.role === 'agent' ? 'Dispatch' : 'You'}</strong><span>{item.text}</span></p>) : <p className="empty-transcript">The live transcript will appear here.</p>}
       </div>
     </section>
+      </div>
+      {dashboard.data && <LiveRefill data={dashboard.data} layout="voice" />}
+    </div>
+
     <footer>Real ElevenLabs voice · Simulated booking · No Twilio</footer>
   </main>;
 }
