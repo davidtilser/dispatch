@@ -40,6 +40,28 @@ No credentials are required to use the calendar, reset, or run automated tests. 
 
 ## Data and reset
 
+### Import a business website
+
+Click **Set up your business** on the dashboard. The example is
+`https://www.thecuttingroomsf.com/`. **Find my business** reads public metadata,
+structured offers and service/price headings. When Claude crawler credentials are
+configured, the existing crawler is used first. Unreadable sites fall back to an
+explicitly manual form, never invented details.
+
+Review the name, choose a service, confirm its USD price and duration, then click
+**Activate demo business**. Missing duration defaults visibly to 45 minutes.
+Activation starts a fresh sample calendar. The dashboard, manager brief, voice
+variables, replacement booking and recovered revenue all use the confirmed data.
+The profile survives Reset demo and API restart. Changing businesses is blocked
+during an active refill or open call. No real booking platform is connected:
+hours stay 9 AM–6 PM Pacific, customers are seeded and the $15 fee is simulated.
+Only one business and one selected service are active in the demo.
+
+Routes: `POST /api/business/preview` with `{ "url": "https://…" }`, and
+`GET`/`POST /api/demo/business` for the reviewed setup.
+
+### Calendar and persistence
+
 The seed uses **tomorrow in America/Los_Angeles**, calculated when the API starts with the correct date-specific UTC offset, one barber, five 45-minute $45 bookings on the reference day, one occupied 1 PM appointment the following day, and three waitlist clients. Original bookings have a $15 simulated cancellation fee. The calendar supports seven days starting on the seeded demo day, with daily demo business hours 09:00–18:00. Search produces up to six real free starts on a 15-minute grid from service duration and current SQLite collisions. The original start and +30 minutes count as replacements; every other start, including another day, is a separate appointment. Separate bookings keep the original cancellation fee pending and recovered revenue unchanged, while preparing the next waitlist candidate. Another browser call cannot begin until the current audio ends.
 
 For the cross-day demo, ask for the afternoon of the day after the original offer. The call supplies an explicit business-local reference date for “today”; “tomorrow” is resolved relative to it. The day after the seeded demo date has an occupied 13:00 appointment; 14:00 is initially free. Agree to the exact named day and time. The saved confirmation includes the date, and the dashboard's day selector shows the separate appointment. The booking tool requires `confirmed: true` for dated requests; legacy `{ time: "15:30" }` calls retain the existing explicit-acceptance tool semantics. Availability searches never reserve a slot.

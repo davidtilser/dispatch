@@ -8,10 +8,11 @@ import { DemoCoordinator } from './demo-coordinator.js';
 import { DemoVoice } from './demo-voice.js';
 import { RefillController } from './refill.controller.js';
 import { BOOKINGS, MANAGER, VOICE } from './tokens.js';
+import { BusinessSetupController } from '../business/business-setup.controller.js';
 
 @Module({
   imports: [BusinessModule],
-  controllers: [RefillController],
+  controllers: [RefillController, BusinessSetupController],
   providers: [
     DemoCoordinator,
     // Shared SQLite calendar and manually accepted browser-call offers.

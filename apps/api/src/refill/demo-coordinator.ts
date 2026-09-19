@@ -1,10 +1,11 @@
 import { ConflictException, Inject, Injectable, NotFoundException, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { DispatchManager } from '@dispatch/agents';
 import { SqliteBookings, DEMO_DATE, DEMO_LAST_DATE, demoTime, localTime, localDate, validDemoDate, spokenCalendarDate } from '@dispatch/data';
-import type { AcceptRequest, AvailabilityRequest, AvailabilityResult, CallOutcome, CallRequest, DemoDashboard, VoiceDemoContext, VoiceDemoSession } from '@dispatch/contracts';
+import type { AcceptRequest, AvailabilityRequest, AvailabilityResult, CallOutcome, CallRequest, DemoDashboard, DemoBusinessSetup, VoiceDemoContext, VoiceDemoSession } from '@dispatch/contracts';
 import { randomUUID } from 'node:crypto';
 import { DemoVoice } from './demo-voice.js';
 import { BOOKINGS, MANAGER, VOICE } from './tokens.js';
+import { BusinessStore } from '../business/business.store.js';
 
 // Serializes demo mutations around the existing manager, including cross-tab tool calls.
 @Injectable()
@@ -14,9 +15,12 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
   private sessions = new Map<string, { value: VoiceDemoSession; call: CallRequest; connected: boolean }>();
   constructor(@Inject(BOOKINGS) readonly bookings: SqliteBookings,
     @Inject(MANAGER) readonly manager: DispatchManager,
-    @Inject(VOICE) readonly voice: DemoVoice) {}
+    @Inject(VOICE) readonly voice: DemoVoice,
+    @Inject(BusinessStore) private readonly businesses: BusinessStore) {}
 
   async onModuleInit() {
+    const setup = this.bookings.businessSetup();
+    if (setup) this.useBusiness(setup);
     // Bookings survive API restarts; in-flight browser offers restart from the waitlist.
     for (const slot of this.bookings.bookings()) {
       if (slot.status !== 'cancelled' || slot.feeStatus !== 'pending') continue;
@@ -49,7 +53,7 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
   dashboard(): Promise<DemoDashboard> {
     return this.serial(async () => {
       const call = await this.currentCall();
-      return { businessName: 'Apblendzz', date: DEMO_DATE, timezone: 'America/Los_Angeles',
+      return { businessName: (await this.businesses.get('biz_001'))!.name, date: DEMO_DATE, timezone: 'America/Los_Angeles',
         bookings: this.bookings.bookings(), waitlist: this.bookings.waitlist(), events: this.bookings.events(),
         run: this.runId ? await this.manager.getRun(this.runId) : null,
         offer: call ? { attemptId: call.attemptId, customerName: call.contact.name, service: call.slot.service, time: localTime(call.slot.startsAt),
@@ -75,6 +79,31 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
       this.manager.reset(); this.voice.calls.length = 0; this.sessions.clear(); this.runId = null;
       this.bookings.reset();
       return { ok: true };
+    });
+  }
+  private useBusiness(setup: DemoBusinessSetup) {
+    this.businesses.save({ id: 'biz_001', name: setup.name, website: setup.website, timezone: 'America/Los_Angeles',
+      services: [`${setup.service.name} ($${(setup.service.priceCents / 100).toFixed(2)})`] });
+  }
+  businessSetup() {
+    return this.serial(async (): Promise<DemoBusinessSetup> => {
+      const saved = this.bookings.businessSetup();
+      if (saved) return saved;
+      const business = (await this.businesses.get('biz_001'))!;
+      return { name: business.name, website: business.website, service: { name: 'Haircut', priceCents: 4500, durationMinutes: 45 } };
+    });
+  }
+  activateBusiness(setup: DemoBusinessSetup) {
+    return this.serial(async () => {
+      const run = this.runId ? await this.manager.getRun(this.runId) : null;
+      if (run?.status === 'calling' || run?.status === 'pending' || [...this.sessions.values()].some(s => s.connected)) {
+        throw new ConflictException('Finish the current refill and call, or reset the demo, before changing the business.');
+      }
+      this.bookings.reset(setup);
+      this.manager.reset(); this.voice.calls.length = 0; this.sessions.clear(); this.runId = null;
+      this.useBusiness(setup);
+      this.bookings.log(`Business activated: ${setup.name}. Demo calendar uses ${setup.service.name}. Public website details only; no external booking integration.`);
+      return structuredClone(setup);
     });
   }
   createSession(attemptId?: string) {

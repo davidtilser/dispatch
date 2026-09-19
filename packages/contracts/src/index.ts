@@ -1,5 +1,6 @@
 import { z } from 'zod';
 export * from './voice.js';
+export * from './business.js';
 
 // Shared payloads. Coordinate contract changes with the other owners.
 export const businessUrlSchema = z.object({ url: z.string().url() });

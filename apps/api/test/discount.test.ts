@@ -30,7 +30,7 @@ for (const customWriter of [false, true]) {
           allowedAlternatives: [], mustNot: ['offer discounts', 'pressure'],
         }) } } : {}),
       });
-      const coordinator = new DemoCoordinator(bookings, manager, voice);
+      const coordinator = new DemoCoordinator(bookings, manager, voice, business);
       await coordinator.cancel('slot_3pm');
       const session = await coordinator.createSession();
       assert.equal(session.context.discount, '10% off');

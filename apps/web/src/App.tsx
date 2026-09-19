@@ -5,6 +5,7 @@ import { AppHeader } from './AppHeader';
 import './dashboard.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AnimatedMoney, DispatchOrbit, Signal } from './MotionUI';
+import { BusinessSetup } from './business/BusinessSetup';
 import { LiveRefill } from './refill/LiveRefill';
 
 const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
@@ -65,6 +66,7 @@ export function App() {
         <span className="overview-label"><Radio size={13} aria-hidden="true" /> {data?.businessName ?? 'Apblendzz'} <span>/</span> Live workspace</span>
         <h1>Fewer empty chairs.<br /><span>More possibilities.</span></h1>
         <p>A cancellation is just the beginning. Your AI assistant finds the next customer, so every opening gets another chance.</p>
+        <BusinessSetup disabled={busy || !data || !!inProgress || !!data.offer?.sessionActive} onActivated={() => { void refresh().catch(() => setError('API unavailable')); }} />
       </div>
       <DispatchOrbit active={!!inProgress} complete={data?.run?.status === 'filled'} />
       <div className="shop-counts"><span><strong>{data ? booked : '—'}</strong> active bookings</span><span><strong>{data ? waiting : '—'}</strong> on the waitlist</span><span><ShieldCheck size={14} aria-hidden="true" /> One slot. One happy customer.</span></div>
@@ -100,7 +102,7 @@ export function App() {
     <div className="shop-grid">
       <section className="agenda">
         <div className="section-title"><div><p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Today’s agenda</p><h2>Day’s appointments</h2></div><span className="count-pill">{data ? booked : '—'} booked</span></div>
-        <p className="section-subtitle">45-minute haircuts · $45 · Cancellation fee $15</p>
+        <p className="section-subtitle">{data?.bookings[0] ? `${data.bookings[0].durationMinutes}-minute ${data.bookings[0].service} · ${money(data.bookings[0].priceCents)} · Cancellation fee ${money(data.bookings[0].cancellationFeeCents)}` : 'Loading services…'}</p>
         {inProgress && <div className="refill-notice" id="cancel-blocked-reason" role="status"><strong>One refill at a time</strong><p>{cancellationBlockedReason}</p><button className="cancel-button" disabled={busy} onClick={() => void action('demo/reset')}>Reset demo to start over</button><small>Reset restores all demo bookings and clears the current call.</small></div>}
         <div className="agenda-list">
           {!data && <p role="status">Loading calendar…</p>}
@@ -115,7 +117,7 @@ export function App() {
             </div>
           </motion.article>)}</AnimatePresence>
         </div>
-        <div className="calendar-note"><Sparkles size={15} aria-hidden="true" /><p>Demo tip: the 3:00 PM slot can move to 3:30 PM. A 4:00 PM start conflicts with the 4:30 PM appointment.</p></div>
+        <div className="calendar-note"><Sparkles size={15} aria-hidden="true" /><p>Ask Dispatch for another time. It checks availability against the service duration and existing appointments.</p></div>
       </section>
 
       <aside className="shop-sidebar">

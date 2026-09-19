@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { BookingRepository } from './index.js';
-import type { DemoAction, DemoBooking, DemoDashboard, DemoEvent, AvailabilityRequest, AvailableSlot } from '@dispatch/contracts';
+import type { DemoAction, DemoBooking, DemoDashboard, DemoEvent, DemoBusinessSetup, AvailabilityRequest, AvailableSlot } from '@dispatch/contracts';
 
 import { DEMO_DATE, DEMO_LAST_DATE, addDays, demoTime, localTime, localDate, validDemoDate, candidateTimes, spokenCalendarDate } from './calendar.js';
 export { DEMO_DATE, demoTime, localTime } from './calendar.js';
@@ -16,7 +16,8 @@ export class SqliteBookings implements BookingRepository {
     this.db = new DatabaseSync(path);
     this.db.exec(`CREATE TABLE IF NOT EXISTS clients (id TEXT PRIMARY KEY, name TEXT, phone TEXT, waitlist INTEGER, booked INTEGER DEFAULT 0);
       CREATE TABLE IF NOT EXISTS bookings (id TEXT PRIMARY KEY, data TEXT NOT NULL, idempotency_key TEXT UNIQUE);
-      CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, message TEXT);`);
+      CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, message TEXT);
+      CREATE TABLE IF NOT EXISTS demo_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
     // Additive migration: existing demo databases and their text activity remain usable.
     if (!this.db.prepare('PRAGMA table_info(events)').all().some(column => column.name === 'action')) {
       this.db.exec('ALTER TABLE events ADD COLUMN action TEXT');
@@ -27,19 +28,25 @@ export class SqliteBookings implements BookingRepository {
     if (staleDay || !this.db.prepare('SELECT id FROM clients LIMIT 1').get()) this.reset();
   }
   close() { this.db.close(); }
-  reset() {
+  businessSetup(): DemoBusinessSetup | null {
+    const row = this.db.prepare("SELECT value FROM demo_settings WHERE key = 'business'").get();
+    return row ? JSON.parse(String(row.value)) as DemoBusinessSetup : null;
+  }
+  reset(setup?: DemoBusinessSetup) {
     this.db.exec('BEGIN');
     try {
+      if (setup) this.db.prepare("INSERT INTO demo_settings (key,value) VALUES ('business',?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(JSON.stringify(setup));
+      const service = this.businessSetup()?.service;
       this.db.exec('DELETE FROM bookings; DELETE FROM clients; DELETE FROM events;');
       const names = ['Alex Morgan', 'Marcus Chen', 'Daniel Reyes', 'Chris Brooks', 'Oliver James', 'Jordan Davis', 'Sam Rivera', 'Taylor Wilson'];
       names.forEach((name, i) => this.db.prepare('INSERT INTO clients (id,name,phone,waitlist) VALUES (?,?,?,?)').run(`client_${i}`, name, `+1650555010${i}`, i >= 5 ? 1 : 0));
       ['09:00', '10:30', '13:00', '15:00', '16:30'].forEach((time, i) => {
-        const booking: DemoBooking = { id: i === 3 ? 'slot_3pm' : `slot_${i}`, businessId: 'biz_001', startsAt: demoTime(time), durationMinutes: 45,
-          service: 'Haircut', priceCents: 4500, currency: 'USD', customerId: `client_${i}`, customerName: names[i]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' };
+        const booking: DemoBooking = { id: i === 3 ? 'slot_3pm' : `slot_${i}`, businessId: 'biz_001', startsAt: demoTime(time), durationMinutes: service?.durationMinutes ?? 45,
+          service: service?.name ?? 'Haircut', priceCents: service?.priceCents ?? 4500, currency: 'USD', customerId: `client_${i}`, customerName: names[i]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' };
         this.save(booking);
       });
-      this.save({ id: 'slot_tomorrow', businessId: 'biz_001', startsAt: demoTime('13:00', addDays(DEMO_DATE, 1)), durationMinutes: 45,
-        service: 'Haircut', priceCents: 4500, currency: 'USD', customerId: 'client_0', customerName: names[0]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' });
+      this.save({ id: 'slot_tomorrow', businessId: 'biz_001', startsAt: demoTime('13:00', addDays(DEMO_DATE, 1)), durationMinutes: service?.durationMinutes ?? 45,
+        service: service?.name ?? 'Haircut', priceCents: service?.priceCents ?? 4500, currency: 'USD', customerId: 'client_0', customerName: names[0]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' });
       this.log('Demo reset. Calendar and waitlist ready. No real payments or calendar integrations.');
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }

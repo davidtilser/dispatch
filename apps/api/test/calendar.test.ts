@@ -15,7 +15,7 @@ function fixture() {
   const voice = new DemoVoice();
   const business = new BusinessStore();
   const manager = new DispatchManager({ bookings, voice, getBusiness: id => business.get(id) });
-  return { bookings, manager, demo: new DemoCoordinator(bookings, manager, voice) };
+  return { bookings, manager, demo: new DemoCoordinator(bookings, manager, voice, business) };
 }
 
 test('tomorrow search → explicit exact-day booking → next candidate; original gap stays pending', async () => {
