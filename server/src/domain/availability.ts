@@ -42,20 +42,7 @@ export function availableSlots(
   for (const slotStart of thirtyMinSlots(windowStart, windowEnd)) {
     const slotEnd = addMinutes(slotStart, 30);
 
-    // ── Check business hours ────────────────────────────────────────────────
-    const d = new Date(slotStart);
-    const dayKey = DAY_KEYS[d.getUTCDay()] as DayKey;
-    const dayHours = business.hours[dayKey];
-    if (!dayHours) continue; // closed this day
-
-    // Parse open/close as HH:MM on same calendar date (UTC for simplicity)
-    const [openH, openM] = dayHours.open.split(':').map(Number) as [number, number];
-    const [closeH, closeM] = dayHours.close.split(':').map(Number) as [number, number];
-    const datePrefix = slotStart.slice(0, 10); // "YYYY-MM-DD"
-    const openTime = `${datePrefix}T${pad(openH)}:${pad(openM)}:00.000Z`;
-    const closeTime = `${datePrefix}T${pad(closeH)}:${pad(closeM)}:00.000Z`;
-
-    if (slotStart < openTime || slotEnd > closeTime) continue;
+    if (!isWithinBusinessHours(business, slotStart, slotEnd)) continue;
 
     // ── Check confirmed bookings ───────────────────────────────────────────
     if (confirmedBookings.some(b => overlaps(slotStart, slotEnd, b.start, b.end))) continue;
@@ -67,6 +54,39 @@ export function availableSlots(
   }
 
   return result;
+}
+
+/** True if [start,end) falls entirely within the business's open hours for that calendar day. */
+function isWithinBusinessHours(business: Business, start: string, end: string): boolean {
+  const d = new Date(start);
+  const dayKey = DAY_KEYS[d.getUTCDay()] as DayKey;
+  const dayHours = business.hours[dayKey];
+  if (!dayHours) return false; // closed this day
+
+  // Parse open/close as HH:MM on same calendar date (UTC for simplicity)
+  const [openH, openM] = dayHours.open.split(':').map(Number) as [number, number];
+  const [closeH, closeM] = dayHours.close.split(':').map(Number) as [number, number];
+  const datePrefix = start.slice(0, 10); // "YYYY-MM-DD"
+  const openTime = `${datePrefix}T${pad(openH)}:${pad(openM)}:00.000Z`;
+  const closeTime = `${datePrefix}T${pad(closeH)}:${pad(closeM)}:00.000Z`;
+
+  return start >= openTime && end <= closeTime;
+}
+
+/** True if `atIso` falls within the business's open hours (a plain hours check — ignores bookings/holds). */
+export function isOpenAt(business: Business, atIso: string): boolean {
+  const d = new Date(atIso);
+  const dayKey = DAY_KEYS[d.getUTCDay()] as DayKey;
+  const dayHours = business.hours[dayKey];
+  if (!dayHours) return false;
+
+  const [openH, openM] = dayHours.open.split(':').map(Number) as [number, number];
+  const [closeH, closeM] = dayHours.close.split(':').map(Number) as [number, number];
+  const datePrefix = atIso.slice(0, 10);
+  const openTime = `${datePrefix}T${pad(openH)}:${pad(openM)}:00.000Z`;
+  const closeTime = `${datePrefix}T${pad(closeH)}:${pad(closeM)}:00.000Z`;
+
+  return atIso >= openTime && atIso < closeTime;
 }
 
 function pad(n: number): string {

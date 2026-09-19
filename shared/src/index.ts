@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// ─── Demo geography ────────────────────────────────────────────────────────────
+
+/**
+ * Center point for the demo's business search radius (Fremont, CA).
+ * The mock provider seeds businesses within ~15 miles of this point.
+ */
+export const DEMO_CENTER = { lat: 37.5485, lng: -121.9886 } as const;
+
 // ─── Shared Zod schemas ────────────────────────────────────────────────────────
 
 export const businessUrlSchema = z.object({

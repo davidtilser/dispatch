@@ -136,6 +136,33 @@ export interface CallAttempt {
   skipReason?: string;
 }
 
+// ─── Business search ──────────────────────────────────────────────────────────
+
+/** Business augmented with search-time computed fields. */
+export type BusinessSearchResult = Business & {
+  /** Great-circle distance from the search origin, in miles. */
+  distanceMiles: number;
+  /**
+   * ISO 8601 start of the next available slot across any resource, within a
+   * bounded look-ahead window. Omitted if none was found in that window.
+   */
+  nextOpening?: string;
+  /** True when no resource has any available slot for the rest of today. */
+  fullyBooked: boolean;
+};
+
+/** Optional filters applied after distance sort in searchBusinesses(). */
+export interface BusinessSearchFilters {
+  priceLevels?: PriceLevel[];
+  minRating?: number;
+  /** Business hours currently cover the search moment. */
+  openNow?: boolean;
+  /** Equivalent to `!fullyBooked` — at least one resource has an opening today. */
+  hasOpeningsToday?: boolean;
+  /** Case-insensitive substring match against any of the business's service names. */
+  services?: string[];
+}
+
 // ─── Domain error codes ───────────────────────────────────────────────────────
 
 export type DomainErrorCode =

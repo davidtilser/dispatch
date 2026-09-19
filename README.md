@@ -43,6 +43,7 @@ Open **http://127.0.0.1:5173** in your browser.
 | `npm run build` | Build server and client for production |
 | `npm start` | Run the production build (Express serves built client) |
 | `npm run check:security` | Run security audit script |
+| `npm run seed:preview -w server` | Print categorized sample crawler records and a sample distance-sorted search (no server started) |
 
 ---
 
@@ -105,8 +106,15 @@ getitdone/
 │       ├── middleware/
 │       │   ├── logger.ts
 │       │   └── errorHandler.ts
-│       └── routes/
-│           └── health.ts
+│       ├── routes/
+│       │   └── health.ts
+│       ├── domain/         # Booking/hold/waitlist engine (pure logic, no HTTP)
+│       ├── providers/      # BusinessProvider: MockBusinessProvider, CrawlerBusinessProvider stub
+│       ├── categorization/ # keyword-dictionary categorize() + inferServices()
+│       ├── search/         # sanitizeBusiness, haversine distance, searchBusinesses pipeline
+│       ├── data/            # mock businesses, demo clients/bookings, DEMO_SLOT, crawler samples
+│       └── scripts/
+│           └── seedPreview.ts  # `npm run seed:preview -w server`
 ├── shared/          # Shared TypeScript types + Zod schemas
 │   └── src/index.ts
 ├── scripts/
@@ -125,3 +133,9 @@ getitdone/
 - **Server tests**: Using `supertest` to test the Express app in-process — no real socket needed.
 - **`start` script**: Per milestone spec ("Express serves the built client"), `npm start` runs the server which would serve `client/dist` as static files. The static-file serving middleware will be added in the build milestone; for now `start` starts the API server only.
 - **HOST not in .env**: The dispatch team starter allows `HOST` to be overridden by env. GetItDone spec explicitly forbids this — `HOST` is a hardcoded constant in `server/src/config.ts`.
+- **DEMO_SLOT business has deliberately narrow hours**: "Priya's Express Cuts" (`biz_barber_3`) is open only 15:00–15:30 UTC, every day — its one possible appointment slot, any day. Seeding books both of its resources there, making it genuinely fully booked (not just "busy at 3pm") regardless of which day the server happens to start on. This sidesteps needing date-specific hours overrides, which the `Business` type doesn't support.
+- **`fullyBooked` is whole-day, not slot-specific**: a search result's `fullyBooked` means "no resource has any opening for the rest of today," computed via `domain/availability.ts`'s `availableSlots()`. `hasOpeningsToday` filter is just `!fullyBooked`. `nextOpening` scans forward up to 7 days for the earliest slot across any resource.
+- **`isOpenAt()` added to `domain/availability.ts`**: a small extraction of the existing hours-check (previously inline in `availableSlots()`) so `searchBusinesses()`'s `openNow` filter — a pure business-hours check, independent of booking availability — can reuse it instead of duplicating the day/hours parsing.
+- **`services[]` search filter** matches case-insensitive substrings against each business's `Service.name` fields directly. `inferServices()`'s normalized tags are for categorizing crawler-sourced businesses, not for matching this filter.
+- **Keyword matching uses word boundaries with a tolerant trailing "s"** (e.g. `\bspa s?\b`) so `categorize()`/`inferServices()` don't false-positive on substrings (e.g. "spa" inside "Sparkle") while still catching simple plurals ("fade"/"fades").
+- **Brand color palette staged, not applied**: `docs/design/` (colors + Tailwind v4 `@theme` block, ready for `client`) was carried over from a teammate's reference project for a future UI milestone to adopt. This (data-layer) milestone doesn't touch the client, so it's unused for now — see `docs/design/README.md`.

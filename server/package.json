@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && tsx src/index.ts",
     "start": "node --experimental-strip-types --env-file=.env src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:preview": "tsx --env-file=.env src/scripts/seedPreview.ts"
   },
   "dependencies": {
     "@getitdone/shared": "*",
