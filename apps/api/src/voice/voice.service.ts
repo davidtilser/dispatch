@@ -1,6 +1,6 @@
 import { BadGatewayException, ConflictException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { demoContext, dynamicVariables, ElevenLabsWebVoice, VoiceDemoStore, VoiceSessionError } from '@dispatch/voice';
-import type { VoiceDemoConfiguration, VoiceSessionStart } from '@dispatch/contracts';
+import type { VoiceDemoConfiguration, VoiceDemoContext, VoiceSessionStart } from '@dispatch/contracts';
 
 @Injectable()
 export class VoiceService {
@@ -11,15 +11,17 @@ export class VoiceService {
     return { configured: missing.length === 0, missing, context: demoContext() };
   }
 
-  async start(): Promise<VoiceSessionStart> {
+  // context: optional override from the refill manager (who to call, which times). Defaults to the demo.
+  async start(context?: VoiceDemoContext): Promise<VoiceSessionStart> {
     const config = this.configuration();
     if (!config.configured) throw new ServiceUnavailableException(`Set ${config.missing.join(', ')} in .env. Run npm run voice:setup to create the agent.`);
     const voice = new ElevenLabsWebVoice(process.env.ELEVENLABS_API_KEY!, process.env.ELEVENLABS_AGENT_ID!);
     let conversationToken: string;
     try { conversationToken = await voice.createToken(); }
     catch (error) { throw new BadGatewayException(error instanceof Error ? error.message : 'ElevenLabs unavailable'); }
-    const session = this.perform(() => this.store.create(config.context));
-    return { session, conversationToken, dynamicVariables: dynamicVariables(config.context) };
+    const sessionContext = context ?? config.context;
+    const session = this.perform(() => this.store.create(sessionContext));
+    return { session, conversationToken, dynamicVariables: dynamicVariables(sessionContext) };
   }
 
   get(id: string) { return this.perform(() => this.store.get(id)); }

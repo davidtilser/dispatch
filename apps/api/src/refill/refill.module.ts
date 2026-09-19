@@ -48,6 +48,6 @@ const TIME_FORMAT: Intl.DateTimeFormatOptions = {
       },
     },
   ],
-  exports: [MANAGER],
+  exports: [MANAGER, VOICE, BOOKINGS],
 })
 export class RefillModule {}

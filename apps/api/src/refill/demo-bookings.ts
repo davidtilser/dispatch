@@ -1,12 +1,14 @@
 import type { BookingSlot, WaitlistContact } from '@dispatch/contracts';
 import type { ManagerBookings } from '@dispatch/agents';
+import { tomorrow, toIso } from './time.js';
 
 // TEMPORARY stand-in until packages/data ships the real in-memory repository.
 // Waitlist phones come from DEMO_WAITLIST in .env so real numbers stay out of Git:
 // DEMO_WAITLIST="Jordan:+16505550199,Sam:+16505550188"
-const TODAY = '2026-09-19';
-const OFFSET = '-07:00';
-const at = (time: string) => `${TODAY}T${time}:00${OFFSET}`;
+// Tomorrow in the shop's timezone, matching the voice demo, so offered times are never in the past.
+const TIMEZONE = 'America/Los_Angeles';
+const DAY = tomorrow(TIMEZONE);
+const at = (time: string) => toIso(DAY, time, TIMEZONE);
 
 export class DemoBookings implements ManagerBookings {
   readonly slots = new Map<string, BookingSlot>([

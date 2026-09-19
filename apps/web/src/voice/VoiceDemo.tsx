@@ -55,7 +55,9 @@ export function VoiceDemo() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
       if (!isCurrent()) return;
-      const prepared = await api<VoiceSessionStart>('sessions', {});
+      // ?run=<id> attaches this call to a manager refill run; without it the demo runs standalone.
+      const runId = new URLSearchParams(window.location.search).get('run');
+      const prepared = await api<VoiceSessionStart>('sessions', runId ? { runId } : {});
       attempt.id = prepared.session.id;
       if (!isCurrent()) { await api(`sessions/${attempt.id}/end`, { reason: 'ended' }); return; }
       setSession(prepared.session);
@@ -146,7 +148,7 @@ export function VoiceDemo() {
     <div className="voice-grid">
       <section className="call-card">
         <div className={`voice-orb ${status === 'connected' ? 'live' : ''} ${speaking ? 'speaking' : ''}`} aria-hidden="true">D</div>
-        <h2>{status === 'connected' ? (speaking ? 'Dispatch is speaking' : 'Your turn, Jordan') : status === 'connecting' ? 'Connecting…' : status === 'disconnecting' ? 'Ending call…' : 'Your appointment is calling'}</h2>
+        <h2>{status === 'connected' ? (speaking ? 'Dispatch is speaking' : `Your turn, ${context?.customerName ?? 'Jordan'}`) : status === 'connecting' ? 'Connecting…' : status === 'disconnecting' ? 'Ending call…' : 'Your appointment is calling'}</h2>
         <p aria-live="polite">{status === 'connected' ? (muted ? 'Microphone muted' : 'Microphone on · Live AI conversation') : 'Browser audio · No phone number needed'}</p>
         <div className="call-actions">
           {status === 'disconnected' ? <button disabled={!config?.configured} onClick={() => void start()}>{session ? 'Start another demo' : 'Accept web call'}</button> : <>
