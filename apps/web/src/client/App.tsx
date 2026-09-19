@@ -43,7 +43,7 @@ const MainAppContent: React.FC = () => {
   if (user.role === 'business') return <p className="p-8">Opening the shop dashboard…</p>;
 
   return (
-    <div className="min-h-screen bg-[#010736] text-[#fcf1d0] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#080e20] text-[#f7f3e8] flex flex-col font-sans">
       <Header />
 
       {/* Floating Toast Notification */}
@@ -53,7 +53,7 @@ const MainAppContent: React.FC = () => {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-20 right-6 z-50 bg-[#0d1c42] text-[#fcf1d0] px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2.5 border border-[#22396f] text-xs font-medium"
+            className="fixed top-20 right-6 z-50 bg-[#101a30] text-[#f7f3e8] px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2.5 border border-[#263751] text-xs font-medium"
           >
             <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
             <span>{toastMessage}</span>
@@ -61,7 +61,7 @@ const MainAppContent: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="px-4 py-2 text-center text-[11px] text-[#d8ceb2] border-b border-[#22396f]">Client demo · Sample businesses and local bookings. <a className="underline" href="/">Open the live shop demo</a> for the shared calendar and voice calls.</div>
+      <div className="px-4 py-2 text-center text-[11px] text-[#a3aec3] border-b border-[#263751]">Client demo · Sample businesses and local bookings. <a className="underline" href="/">Open the live shop demo</a> for the shared calendar and voice calls.</div>
       <main className="flex-1">
 
           <motion.div
@@ -72,13 +72,13 @@ const MainAppContent: React.FC = () => {
           >
             {/* Client Tab Switcher */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-              <div className="flex items-center space-x-2 border-b border-[#22396f] pb-3">
+              <div className="flex items-center space-x-2 border-b border-[#263751] pb-3">
                 <button
                   onClick={() => setClientTab('search')}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     clientTab === 'search'
-                      ? 'bg-[#22396f] text-[#fcf1d0] border border-[#22396f] shadow-xs'
-                      : 'text-[#fcf1d0]/70 hover:text-[#fcf1d0] hover:bg-[#0d1c42]'
+                      ? 'bg-[#263751] text-[#f7f3e8] border border-[#263751] shadow-xs'
+                      : 'text-[#f7f3e8]/70 hover:text-[#f7f3e8] hover:bg-[#101a30]'
                   }`}
                 >
                   Discover Services
@@ -87,8 +87,8 @@ const MainAppContent: React.FC = () => {
                   onClick={() => setClientTab('bookings')}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     clientTab === 'bookings'
-                      ? 'bg-[#22396f] text-[#fcf1d0] border border-[#22396f] shadow-xs'
-                      : 'text-[#fcf1d0]/70 hover:text-[#fcf1d0] hover:bg-[#0d1c42]'
+                      ? 'bg-[#263751] text-[#f7f3e8] border border-[#263751] shadow-xs'
+                      : 'text-[#f7f3e8]/70 hover:text-[#f7f3e8] hover:bg-[#101a30]'
                   }`}
                 >
                   My Appointments & Queue

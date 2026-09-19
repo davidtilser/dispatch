@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spokenDate } from '@dispatch/voice';
@@ -37,4 +38,21 @@ test('the demo day is tomorrow in the shop timezone, so offered times are never 
   assert.ok(Date.parse(demoTime('09:00')) > Date.now(), 'first slot is still ahead');
   assert.ok(demoTime('15:00').startsWith(`${DEMO_DATE}T15:00:00`), 'slots sit on the demo date');
   assert.match(demoTime('15:00'), /[+-]\d{2}:\d{2}$/);
+});
+
+test('seeded wall-clock times use the correct offset in winter and on DST transition days', () => {
+  for (const [now, expected] of [
+    ['2026-01-10T20:00:00Z', '2026-01-11T15:00:00-08:00'],
+    ['2026-03-07T20:00:00Z', '2026-03-08T15:00:00-07:00'],
+    ['2026-10-31T20:00:00Z', '2026-11-01T15:00:00-08:00'],
+  ]) {
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import { mock } from 'node:test';
+      mock.timers.enable({ apis: ['Date'], now: Date.parse(${JSON.stringify(now)}) });
+      const { demoTime, localTime } = await import('@dispatch/data');
+      console.log(JSON.stringify([demoTime('15:00'), localTime(demoTime('15:00'))]));
+    `], { encoding: 'utf8' });
+    assert.equal(child.status, 0, child.stderr);
+    assert.deepEqual(JSON.parse(child.stdout), [expected, '15:00']);
+  }
 });

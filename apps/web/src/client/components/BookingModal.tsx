@@ -38,25 +38,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#010736]/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#080e20]/70 backdrop-blur-xs flex items-center justify-center p-4">
       <motion.div role="dialog" aria-modal="true" aria-label="Book appointment"
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[#0d1c42] rounded-2xl shadow-2xl max-w-lg w-full max-h-[90dvh] overflow-y-auto border border-[#22396f] text-[#fcf1d0]"
+        className="bg-[#101a30] rounded-2xl shadow-2xl max-w-lg w-full max-h-[90dvh] overflow-y-auto border border-[#263751] text-[#f7f3e8]"
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#22396f] flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-[#263751] flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#fcf1d0]/70">
+            <span className="text-[11px] font-bold tracking-wider uppercase text-[#f7f3e8]/70">
               Direct Booking
             </span>
-            <h3 className="text-lg font-bold text-[#fcf1d0]">{business.name}</h3>
+            <h3 className="text-lg font-bold text-[#f7f3e8]">{business.name}</h3>
           </div>
           <button
             onClick={onClose}
             aria-label="Close dialog"
-            className="w-8 h-8 rounded-full bg-[#010736] text-[#fcf1d0]/60 hover:text-[#fcf1d0] hover:bg-[#22396f]/50 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-[#080e20] text-[#f7f3e8]/60 hover:text-[#f7f3e8] hover:bg-[#263751]/50 flex items-center justify-center transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -76,7 +76,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Select Service */}
           <div>
-            <label className="block text-xs font-semibold text-[#fcf1d0]/80 mb-2">
+            <label className="block text-xs font-semibold text-[#f7f3e8]/80 mb-2">
               Select Service
             </label>
             <div className="space-y-2">
@@ -85,8 +85,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   key={svc.id}
                   className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                     selectedServiceId === svc.id
-                      ? 'border-[#fcf1d0] bg-[#22396f]/60 font-semibold text-[#fcf1d0]'
-                      : 'border-[#22396f] hover:bg-[#22396f]/20 text-[#fcf1d0]/80'
+                      ? 'border-[#f7f3e8] bg-[#263751]/60 font-semibold text-[#f7f3e8]'
+                      : 'border-[#263751] hover:bg-[#263751]/20 text-[#f7f3e8]/80'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">
@@ -95,12 +95,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       name="service"
                       checked={selectedServiceId === svc.id}
                       onChange={() => setSelectedServiceId(svc.id)}
-                      className="accent-[#fcf1d0]"
+                      className="accent-[#f7f3e8]"
                     />
                     <span>{svc.name}</span>
-                    <span className="text-[#fcf1d0]/50">({svc.durationMin}m)</span>
+                    <span className="text-[#f7f3e8]/50">({svc.durationMin}m)</span>
                   </div>
-                  <span className="font-mono font-bold text-[#fcf1d0]">
+                  <span className="font-mono font-bold text-[#f7f3e8]">
                     ${(svc.priceCents / 100).toFixed(0)}
                   </span>
                 </label>
@@ -110,7 +110,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Select Time Slot */}
           <div>
-            <label className="block text-xs font-semibold text-[#fcf1d0]/80 mb-2">
+            <label className="block text-xs font-semibold text-[#f7f3e8]/80 mb-2">
               Available Slots Today
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -124,10 +124,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     onClick={() => setSelectedSlot(slot)}
                     className={`py-2.5 px-3 rounded-xl text-xs font-medium border flex items-center justify-center space-x-1 transition-all cursor-pointer ${
                       taken
-                        ? 'bg-[#010736]/60 text-[#fcf1d0]/30 border-[#22396f]/40 cursor-not-allowed line-through'
+                        ? 'bg-[#080e20]/60 text-[#f7f3e8]/30 border-[#263751]/40 cursor-not-allowed line-through'
                         : selectedSlot === slot
-                        ? 'bg-[#22396f] text-[#fcf1d0] border-[#fcf1d0] font-bold shadow-xs'
-                        : 'bg-[#010736] hover:bg-[#22396f]/30 text-[#fcf1d0]/80 border-[#22396f]'
+                        ? 'bg-[#263751] text-[#f7f3e8] border-[#f7f3e8] font-bold shadow-xs'
+                        : 'bg-[#080e20] hover:bg-[#263751]/30 text-[#f7f3e8]/80 border-[#263751]'
                     }`}
                   >
                     <Clock size={12} />
@@ -141,7 +141,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Client Details */}
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div>
-              <label className="block text-xs font-medium text-[#fcf1d0]/80 mb-1">
+              <label className="block text-xs font-medium text-[#f7f3e8]/80 mb-1">
                 Your Name
               </label>
               <input
@@ -149,11 +149,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-[#010736] border border-[#22396f] rounded-xl text-xs text-[#fcf1d0] placeholder-[#fcf1d0]/40 focus:outline-none focus:border-[#fcf1d0]"
+                className="w-full px-3 py-2 bg-[#080e20] border border-[#263751] rounded-xl text-xs text-[#f7f3e8] placeholder-[#f7f3e8]/40 focus:outline-none focus:border-[#f7f3e8]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#fcf1d0]/80 mb-1">
+              <label className="block text-xs font-medium text-[#f7f3e8]/80 mb-1">
                 Phone
               </label>
               <input
@@ -161,27 +161,27 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-[#010736] border border-[#22396f] rounded-xl text-xs text-[#fcf1d0] placeholder-[#fcf1d0]/40 focus:outline-none focus:border-[#fcf1d0]"
+                className="w-full px-3 py-2 bg-[#080e20] border border-[#263751] rounded-xl text-xs text-[#f7f3e8] placeholder-[#f7f3e8]/40 focus:outline-none focus:border-[#f7f3e8]"
               />
             </div>
           </div>
 
           {/* Submit */}
-          <div className="pt-3 border-t border-[#22396f] flex items-center justify-between">
-            <div className="text-xs text-[#fcf1d0]/70">
-              Total: <b className="text-[#fcf1d0] font-mono text-sm">${((selectedService?.priceCents || 0) / 100).toFixed(0)}</b>
+          <div className="pt-3 border-t border-[#263751] flex items-center justify-between">
+            <div className="text-xs text-[#f7f3e8]/70">
+              Total: <b className="text-[#f7f3e8] font-mono text-sm">${((selectedService?.priceCents || 0) / 100).toFixed(0)}</b>
             </div>
             <div className="flex space-x-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-[#fcf1d0]/70 hover:bg-[#22396f]/40 hover:text-[#fcf1d0] rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-[#f7f3e8]/70 hover:bg-[#263751]/40 hover:text-[#f7f3e8] rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-[#fcf1d0] bg-[#22396f] hover:bg-[#2c478a] border border-[#22396f] rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-[#f7f3e8] bg-[#263751] hover:bg-[#2c478a] border border-[#263751] rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
               >
                 <CheckCircle size={14} />
                 <span>Confirm Booking</span>

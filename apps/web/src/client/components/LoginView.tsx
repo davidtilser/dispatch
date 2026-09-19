@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { DispatchOrbit } from '../../MotionUI';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../types';
 import { Lock, User, Store, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
@@ -28,46 +29,36 @@ export const LoginView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#010736] flex flex-col justify-center items-center px-4 py-12 text-[#fcf1d0]">
+    <div className="login-screen">
+      <aside className="login-story">
+        <a href="/" className="login-wordmark"><img src="/dispatch-logo.png" alt="" />Dispatch<span>DEMO</span></a>
+        <div className="login-story-copy"><span className="login-kicker">GOOD TIMING. GREAT POSSIBILITIES.</span><h1>Life happens.<br />Make room for<br /><em>what’s next.</em></h1><p>Plans change. Your day doesn’t have to stop.<br />Discover your next appointment with Dispatch.</p></div>
+        <DispatchOrbit active />
+        <div className="login-story-footer"><CheckCircle2 size={15} />Cancel free, as long as we fill your spot.</div>
+      </aside>
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="max-w-md w-full"
+        className="login-panel"
       >
-        {/* Brand header */}
-        <div className="text-center mb-8">
-          <h1 className="mb-4">
-            <img
-              src="/dispatch-logo.png"
-              alt="Dispatch"
-              width={160}
-              height={160}
-              className="w-40 h-40 mx-auto rounded-2xl bg-white object-contain"
-            />
-          </h1>
-          <p className="mt-1.5 text-xs text-[#d8ceb2]">
-            Cancel free, as long as we fill your spot.
-          </p>
-        </div>
-
-        <p className="text-center text-xs text-[#d8ceb2] mb-5">Demo sign-in only. <a href="/" className="underline">Open the shop demo without signing in.</a></p>
+        <div className="login-welcome"><span className="login-kicker">YOUR NEXT CHAPTER</span><h2>Welcome to Dispatch.</h2><p>A little flexibility goes a long way.</p></div>
 
         {/* Card */}
-        <div className="bg-[#0d1c42] rounded-2xl shadow-2xl border border-[#22396f] p-8">
+        <div className="login-form-card">
           {/* Role selector tabs */}
           <div className="mb-6">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#d8ceb2] mb-2">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#a3aec3] mb-2">
               Select Your Role
             </label>
-            <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#010736] rounded-xl border border-[#22396f]">
+            <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#080e20] rounded-xl border border-[#263751]">
               <button
                 type="button"
                 onClick={() => setSelectedRole('client')}
                 className={`flex items-center justify-center space-x-2 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   selectedRole === 'client'
-                    ? 'bg-[#22396f] text-[#fcf1d0] shadow-xs'
-                    : 'text-[#d8ceb2] hover:text-[#fcf1d0]'
+                    ? 'bg-[#263751] text-[#f7f3e8] shadow-xs'
+                    : 'text-[#a3aec3] hover:text-[#f7f3e8]'
                 }`}
               >
                 <User size={14} />
@@ -78,8 +69,8 @@ export const LoginView: React.FC = () => {
                 onClick={() => setSelectedRole('business')}
                 className={`flex items-center justify-center space-x-2 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   selectedRole === 'business'
-                    ? 'bg-[#22396f] text-[#fcf1d0] shadow-xs'
-                    : 'text-[#d8ceb2] hover:text-[#fcf1d0]'
+                    ? 'bg-[#263751] text-[#f7f3e8] shadow-xs'
+                    : 'text-[#a3aec3] hover:text-[#f7f3e8]'
                 }`}
               >
                 <Store size={14} />
@@ -103,11 +94,11 @@ export const LoginView: React.FC = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="demo-username" className="block text-xs font-medium text-[#d8ceb2] mb-1">
+              <label htmlFor="demo-username" className="block text-xs font-medium text-[#a3aec3] mb-1">
                 Username
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#d8ceb2]/60">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#a3aec3]/60">
                   <User size={15} />
                 </div>
                 <input
@@ -118,17 +109,17 @@ export const LoginView: React.FC = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="login"
                   required
-                  className="w-full pl-9 pr-3 py-2.5 bg-[#010736] border border-[#22396f] rounded-xl text-xs text-[#fcf1d0] focus:outline-none focus:ring-1 focus:ring-[#fcf1d0] transition-all font-mono"
+                  className="w-full pl-9 pr-3 py-2.5 bg-[#080e20] border border-[#263751] rounded-xl text-xs text-[#f7f3e8] focus:outline-none focus:ring-1 focus:ring-[#f7f3e8] transition-all font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="demo-password" className="block text-xs font-medium text-[#d8ceb2] mb-1">
+              <label htmlFor="demo-password" className="block text-xs font-medium text-[#a3aec3] mb-1">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#d8ceb2]/60">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#a3aec3]/60">
                   <Lock size={15} />
                 </div>
                 <input
@@ -139,14 +130,14 @@ export const LoginView: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="password"
                   required
-                  className="w-full pl-9 pr-3 py-2.5 bg-[#010736] border border-[#22396f] rounded-xl text-xs text-[#fcf1d0] focus:outline-none focus:ring-1 focus:ring-[#fcf1d0] transition-all font-mono"
+                  className="w-full pl-9 pr-3 py-2.5 bg-[#080e20] border border-[#263751] rounded-xl text-xs text-[#f7f3e8] focus:outline-none focus:ring-1 focus:ring-[#f7f3e8] transition-all font-mono"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full mt-2 py-3 rounded-xl font-bold text-xs bg-[#22396f] hover:bg-[#22396f]/80 text-[#fcf1d0] border border-[#22396f] flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md"
+              className="login-submit w-full mt-2 py-3 rounded-xl font-bold text-xs bg-[#263751] hover:bg-[#263751]/80 text-[#f7f3e8] border border-[#263751] flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md"
             >
               <span>Sign In as {selectedRole === 'client' ? 'Client' : 'Business'}</span>
               <ArrowRight size={14} />
@@ -154,14 +145,14 @@ export const LoginView: React.FC = () => {
           </form>
 
           {/* Demo helper banner */}
-          <div className="mt-6 pt-5 border-t border-[#22396f]/70">
-            <div className="bg-[#010736] p-3 rounded-xl border border-[#22396f] mb-3">
-              <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#fcf1d0] mb-1">
+          <div className="mt-6 pt-5 border-t border-[#263751]/70">
+            <div className="bg-[#080e20] p-3 rounded-xl border border-[#263751] mb-3">
+              <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#f7f3e8] mb-1">
                 <CheckCircle2 size={13} className="text-emerald-400" />
                 <span>Demo Credentials Ready</span>
               </div>
-              <p className="text-[11px] text-[#d8ceb2]">
-                Username: <code className="bg-[#0d1c42] px-1 py-0.5 rounded text-[#fcf1d0] font-mono border border-[#22396f]">login</code> • Password: <code className="bg-[#0d1c42] px-1 py-0.5 rounded text-[#fcf1d0] font-mono border border-[#22396f]">password</code>
+              <p className="text-[11px] text-[#a3aec3]">
+                Username: <code className="bg-[#101a30] px-1 py-0.5 rounded text-[#f7f3e8] font-mono border border-[#263751]">login</code> • Password: <code className="bg-[#101a30] px-1 py-0.5 rounded text-[#f7f3e8] font-mono border border-[#263751]">password</code>
               </p>
             </div>
 
@@ -169,14 +160,14 @@ export const LoginView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleQuickDemo('client')}
-                className="py-2 px-3 bg-[#010736] hover:bg-[#22396f] text-[#fcf1d0] font-medium rounded-lg transition-colors text-center border border-[#22396f] cursor-pointer"
+                className="py-2 px-3 bg-[#080e20] hover:bg-[#263751] text-[#f7f3e8] font-medium rounded-lg transition-colors text-center border border-[#263751] cursor-pointer"
               >
                 1-Click Client Demo
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('business')}
-                className="py-2 px-3 bg-[#010736] hover:bg-[#22396f] text-[#fcf1d0] font-medium rounded-lg transition-colors text-center border border-[#22396f] cursor-pointer"
+                className="py-2 px-3 bg-[#080e20] hover:bg-[#263751] text-[#f7f3e8] font-medium rounded-lg transition-colors text-center border border-[#263751] cursor-pointer"
               >
                 1-Click Shop Demo
               </button>
@@ -185,8 +176,8 @@ export const LoginView: React.FC = () => {
         </div>
 
         {/* Footer note */}
-        <p className="text-center text-[11px] text-[#d8ceb2]/70 mt-6">
-          Dispatch · Demo workspace
+        <p className="text-center text-[11px] text-[#a3aec3]/70 mt-6">
+          Demo sign-in · Sample data, real possibilities.
         </p>
       </motion.div>
     </div>

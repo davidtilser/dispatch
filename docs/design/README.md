@@ -1,6 +1,6 @@
 # Design: color palette
 
-Single source of truth for Dispatch colors. Earlier palette explorations and the
+Brand reference palette for Dispatch. Earlier palette explorations and the
 `color-in-use.pptx` deck are deprecated and intentionally not kept in the repo.
 
 ![Dispatch palette](palette.png)
@@ -46,9 +46,7 @@ Text pairings checked against WCAG (AA needs 4.5:1 for body text).
 
 The Tailwind scales are generated tints/shades around each base color; only the
 four hexes above are the actual brand colors, exposed as the unsuffixed tokens
-(`bg-deep-navy`, `text-cornsilk`, ...) next to their 50-950 scales. Tailwind is
-not currently used by `apps/web`, the file is there for anyone starting a
-Tailwind surface.
+(`bg-deep-navy`, `text-cornsilk`, ...) next to their 50-950 scales. The client portal uses Tailwind; the dashboard and voice view use plain CSS.
 
 ## Web application
 
@@ -60,3 +58,18 @@ explicit labels and distinct fills/outlines so they do not rely on color alone.
 The supplied Dispatch logo lives at `apps/web/public/dispatch-logo.png` and is
 used in both page headers and as the favicon. Its original artwork colors are
 preserved independently of the interface palette.
+
+
+## Hackathon interface treatment
+
+The web UI extends the brand palette with a quieter midnight background
+(`#080e20`), layered navy surfaces (`#101a30`), warm white text (`#f7f3e8`),
+and a champagne action accent (`#ead5a3`). Shared interface tokens live in
+`apps/web/src/styles.css`; client utility colors match those surfaces.
+
+The dashboard shows a decorative orbit, animated revenue counters, and a
+three-step recovery indicator driven by the actual demo state. The voice
+signal animates while the assistant is speaking; it is a state indicator,
+not an audio-volume meter. Row and activity transitions use Framer Motion.
+CSS animations and Motion respect the system's reduced-motion preference.
+The login and service discovery screens share the same visual treatment.

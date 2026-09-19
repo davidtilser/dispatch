@@ -37,7 +37,7 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
   }
   private async context(call: CallRequest): Promise<VoiceDemoContext> {
     return { businessName: call.business.name, customerName: call.contact.name, service: call.slot.service,
-      price: `$${call.slot.priceCents / 100}`, date: DEMO_DATE, timezone: call.business.timezone,
+      price: `$${call.slot.priceCents / 100}`, discount: call.slot.discount, date: DEMO_DATE, timezone: call.business.timezone,
       offeredTime: localTime(call.slot.startsAt), availableTimes: (await this.bookings.availableTimes(call.slot.id)).map(localTime) };
   }
   configuration() {

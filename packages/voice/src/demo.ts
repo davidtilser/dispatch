@@ -10,7 +10,9 @@ export function demoContext(now = new Date()): VoiceDemoContext {
 }
 
 export function dynamicVariables(context: VoiceDemoContext, now = new Date()): Record<string, string> {
+  const discount = context.discount?.trim() ?? '';
   return { business_name: context.businessName, customer_name: context.customerName,
+    discount, discount_offer: discount ? ` This opening includes a discount: ${discount}.` : '',
     service: context.service, price: context.price, date: spokenDate(context.date, context.timezone, now), timezone: context.timezone,
     offered_time: spokenTime(context.offeredTime), available_times: context.availableTimes.map(spokenTime).join(', ') };
 }

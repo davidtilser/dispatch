@@ -3,6 +3,8 @@ import type { DemoDashboard } from '@dispatch/contracts';
 import { Activity, ArrowUpRight, CalendarDays, Check, Clock3, DollarSign, PhoneCall, Radio, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { AppHeader } from './AppHeader';
 import './dashboard.css';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatedMoney, DispatchOrbit, Signal } from './MotionUI';
 
 const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
@@ -23,7 +25,7 @@ export function App() {
         const response = await fetch('/api/demo/dashboard');
         if (!response.ok) throw new Error('API unavailable');
         const value = await response.json();
-        if (mounted) setData(value);
+        if (mounted) { setData(value); setError(''); }
       } catch { if (mounted) setError('Cannot reach the API. Start the API, then retry.'); }
     }
     void poll(); const timer = setInterval(() => void poll(), 1000);
@@ -59,28 +61,28 @@ export function App() {
     <AppHeader view="shop" onReset={() => void action('demo/reset')} resetDisabled={busy || !data} />
     <header className="shop-header">
       <div className="shop-intro">
-        <span className="overview-label"><Radio size={13} aria-hidden="true" /> Dispatch command center</span>
-        <h1>{data?.businessName ?? 'Apblendzz'}</h1>
-        <p>Your chair. Always working. Turn an open appointment into your next booking.</p>
+        <span className="overview-label"><Radio size={13} aria-hidden="true" /> {data?.businessName ?? 'Apblendzz'} <span>/</span> Live workspace</span>
+        <h1>Fewer empty chairs.<br /><span>More possibilities.</span></h1>
+        <p>A cancellation is just the beginning. Your AI assistant finds the next customer, so every opening gets another chance.</p>
       </div>
-      <div className="day-label">
-        <span className="date-title"><CalendarDays size={16} aria-hidden="true" /><strong>{dateLabel}</strong></span>
-        <span>Pacific time · One barber</span>
-        <small><i /> Live calendar</small>
-      </div>
-      <div className="shop-counts"><span><strong>{data ? booked : '—'}</strong> active bookings</span><span><strong>{data ? waiting : '—'}</strong> on the waitlist</span><span><ShieldCheck size={14} aria-hidden="true" /> One confirmed booking per slot</span></div>
+      <DispatchOrbit active={!!inProgress} complete={data?.run?.status === 'filled'} />
+      <div className="shop-counts"><span><strong>{data ? booked : '—'}</strong> active bookings</span><span><strong>{data ? waiting : '—'}</strong> on the waitlist</span><span><ShieldCheck size={14} aria-hidden="true" /> One slot. One happy customer.</span></div>
     </header>
+    <div className="workspace-heading"><div><span className="eyebrow">THE BIG PICTURE</span><h2>Your day, in motion.</h2></div><div className="day-label">
+      <span className="date-title"><CalendarDays size={14} aria-hidden="true" /><strong>{dateLabel}</strong></span>
+      <small><i /> Live calendar · Pacific time</small>
+    </div></div>
 
     {error && <p role="alert" className="dashboard-error">{error} <button className="quiet" onClick={() => { setError(''); void refresh().catch(() => setError('API unavailable')); }}>Retry</button></p>}
 
     <div className="metrics">
-      <article><div className="metric-label"><span>Recovered revenue</span><DollarSign size={17} aria-hidden="true" /></div><strong>{money(recovered)}</strong><small>From replacement bookings</small></article>
-      <article><div className="metric-label"><span>Cancellation fees pending</span><Clock3 size={17} aria-hidden="true" /></div><strong className={pending ? 'pending-value' : ''}>{money(pending)}</strong><small>Until a replacement is booked</small></article>
-      <article className={waived ? 'success-metric' : ''}><div className="metric-label"><span>Customer fees waived</span><ShieldCheck size={17} aria-hidden="true" /></div><strong>{money(waived)}</strong><small>No real charges or refunds</small></article>
+      <article className="revenue-metric"><div className="metric-label"><span>Recovered revenue</span><DollarSign size={17} aria-hidden="true" /></div><strong><AnimatedMoney cents={recovered} /></strong><small>From replacement bookings</small></article>
+      <article><div className="metric-label"><span>Cancellation fees pending</span><Clock3 size={17} aria-hidden="true" /></div><strong className={pending ? 'pending-value' : ''}><AnimatedMoney cents={pending} /></strong><small>Until a replacement is booked</small></article>
+      <article className={waived ? 'success-metric' : ''}><div className="metric-label"><span>Customer fees waived</span><ShieldCheck size={17} aria-hidden="true" /></div><strong><AnimatedMoney cents={waived} /></strong><small>No real charges or refunds</small></article>
     </div>
 
     <div className={`refill-banner ${data?.run?.status === 'filled' ? 'complete' : ''} ${data?.offer ? 'has-offer' : ''}`} aria-live="polite">
-      <div className="agent-mark"><Sparkles size={23} aria-hidden="true" /></div>
+      <div className="agent-mark"><Signal active={!!data?.offer} /></div>
       <div className="agent-copy">
         <p className="eyebrow">Dispatch voice assistant {data?.offer && <span className="agent-state"><i />{data.offer.sessionActive ? 'In conversation' : 'Call ready'}</span>}</p>
         <h2>{data?.offer ? `${data.offer.sessionActive ? 'Speaking with' : 'Ready to call'} ${data.offer.customerName}` : data?.run?.status === 'filled' ? 'Spot filled. Customer fee waived.' : data?.run?.status === 'exhausted' ? 'Waitlist complete. No booking accepted.' : 'Turn a cancellation into a full chair.'}</h2>
@@ -89,6 +91,9 @@ export function App() {
       <a className="call-link" href="/voice" target="_blank" rel="noreferrer"><PhoneCall size={15} aria-hidden="true" />Open customer call<ArrowUpRight size={14} aria-hidden="true" /></a>
     </div>
 
+    <ol className="recovery-steps" aria-label="Recovery progress">
+      {[{ label: 'An opening appears', detail: 'Cancellation received', done: !!data?.run }, { label: 'A match is found', detail: 'Your next customer, selected', done: !!data?.offer || data?.run?.status === 'filled' }, { label: 'Everyone wins', detail: 'Chair filled. Fee waived.', done: data?.run?.status === 'filled' }].map((step, i) => <li key={step.label} className={step.done ? 'done' : ''}><span>{step.done ? <Check size={14} /> : `0${i + 1}`}</span><div><strong>{step.label}</strong><small>{step.detail}</small></div>{i < 2 && <ArrowUpRight size={16} aria-hidden="true" />}</li>)}
+    </ol>
     <div className="shop-grid">
       <section className="agenda">
         <div className="section-title"><div><p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Today’s agenda</p><h2>Day’s appointments</h2></div><span className="count-pill">{data ? booked : '—'} booked</span></div>
@@ -96,7 +101,7 @@ export function App() {
         {inProgress && <div className="refill-notice" id="cancel-blocked-reason" role="status"><strong>One refill at a time</strong><p>{cancellationBlockedReason}</p><button className="cancel-button" disabled={busy} onClick={() => void action('demo/reset')}>Reset demo to start over</button><small>Reset restores all demo bookings and clears the current call.</small></div>}
         <div className="agenda-list">
           {!data && <p role="status">Loading calendar…</p>}
-          {data?.bookings.map(b => <article key={b.id} className={`appointment ${b.status}`}>
+          <AnimatePresence initial={false}>{data?.bookings.map(b => <motion.article layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }} key={b.id} className={`appointment ${b.status}`}>
             <div className="appointment-main">
               <div className="appointment-time"><Clock3 size={17} aria-hidden="true" /><strong>{time(b.startsAt)}</strong></div>
               <div className="appointment-person"><div className="person-heading"><strong>{b.customerName}</strong><span className={`badge ${b.status}`}>{b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}</span></div><span>{b.service} · {b.durationMinutes} min · {money(b.priceCents)}</span>{b.status === 'replacement' && <small className="fee-waived"><Check size={12} aria-hidden="true" />Booked by Dispatch</small>}</div>
@@ -105,7 +110,7 @@ export function App() {
               {b.status === 'cancelled' && <div className={`fee-status ${b.feeStatus === 'waived' ? 'fee-waived' : ''}`}><strong>{b.feeStatus === 'waived' ? <ShieldCheck size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}{money(b.cancellationFeeCents)} fee {b.feeStatus === 'waived' ? 'waived' : 'pending'}</strong><small>{b.feeStatus === 'waived' ? 'Spot refilled from the waitlist' : 'Waived when this spot is filled'}</small></div>}
               {b.status === 'booked' && <button className="cancel-button" disabled={busy || inProgress} title={cancellationBlockedReason} aria-describedby={inProgress ? 'cancel-blocked-reason' : undefined} onClick={() => void action(`slots/${b.id}/cancel`)}>{inProgress ? 'Refill active' : busy ? 'Please wait…' : 'Cancel'}</button>}
             </div>
-          </article>)}
+          </motion.article>)}</AnimatePresence>
         </div>
         <div className="calendar-note"><Sparkles size={15} aria-hidden="true" /><p>Demo tip: the 3:00 PM slot can move to 3:30 PM. A 4:00 PM start conflicts with the 4:30 PM appointment.</p></div>
       </section>
@@ -125,7 +130,7 @@ export function App() {
         </section>
         <section className="activity">
           <div className="section-title"><div><p className="eyebrow"><Activity size={14} aria-hidden="true" />Behind the scenes</p><h2>Agent activity</h2></div><span className="live-pill"><i />Live</span></div>
-          <div className="event-list" role="log" aria-live="polite">{data?.events.map(e => <div className="event" key={e.id}><span>{new Date(e.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><p>{e.message}</p></div>)}</div>
+          <div className="event-list" role="log" aria-live="polite">{data?.events.map(e => <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="event" key={e.id}><span>{new Date(e.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><p>{e.message}</p></motion.div>)}</div>
         </section>
       </aside>
     </div>
