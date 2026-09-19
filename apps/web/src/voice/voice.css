@@ -31,6 +31,36 @@
 
 .voice-demo header>p:last-child, .call-card>p { color: var(--text-muted); }
 .voice-demo code, .transcript span { overflow-wrap: anywhere; }
+.voice-demo .call-card { position: relative; overflow: hidden; padding: 22px 30px 30px; background: radial-gradient(ellipse at 50% 36%, color-mix(in srgb, var(--regal-navy) 72%, transparent), transparent 65%), var(--surface); transition: border-color .4s, box-shadow .4s; }
+.call-card.incoming-call { border-color: color-mix(in srgb, var(--cornsilk) 45%, var(--border)); box-shadow: 0 16px 60px #0003; }
+.call-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; }
+.call-status { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--text-muted); }
+.incoming-call .call-status::before, .connection-dot { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: #93e4be; }
+.voice-demo button.ringtone-toggle { padding: 8px 10px; border: 1px solid var(--border); background: transparent; font-size: 11px; border-radius: 30px; white-space: nowrap; }
+.caller-portrait { position: relative; isolation: isolate; width: 190px; height: 190px; margin: 20px auto 8px; display: grid; place-items: center; }
+.caller-portrait .voice-orb { position: relative; width: 108px; height: 108px; margin: 0; font-size: 43px; background: linear-gradient(140deg, var(--regal-navy), var(--deep-navy)); border: 1px solid color-mix(in srgb, var(--cornsilk) 25%, transparent); box-shadow: 0 12px 35px #0003; }
+.caller-portrait .voice-orb.live { background: var(--cornsilk); color: var(--deep-navy); }
+.ring-wave { position: absolute; width: 108px; height: 108px; border: 1px solid color-mix(in srgb, var(--cornsilk) 35%, transparent); border-radius: 50%; opacity: 0; z-index: -1; }
+.incoming-call .ring-wave { animation: incoming-wave 3s ease-out infinite; }
+.incoming-call .wave-two { animation-delay: 1.5s; }
+.caller-phone { position: absolute; right: 38px; bottom: 38px; width: 31px; height: 31px; padding: 8px; border-radius: 50%; color: var(--deep-navy); background: var(--cornsilk); border: 3px solid var(--surface); }
+.incoming-call .caller-phone svg { animation: phone-wiggle 3s ease-in-out infinite; }
+.call-card svg { display: block; width: 100%; height: 100%; }
+.call-card .caller-label { margin: 0 0 10px; font-size: 9px; letter-spacing: .17em; color: var(--text-muted); }
+.call-card .caller-name { font-size: clamp(28px, 3vw, 38px); margin: 0; letter-spacing: -.045em; }
+.call-card .caller-detail { font-size: 13px; margin: 12px auto; max-width: 310px; min-height: 44px; }
+.call-duration { min-height: 20px; font-size: 10px; letter-spacing: .12em; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.voice-demo .answer-call { display: inline-flex; align-items: center; justify-content: center; gap: 12px; border-radius: 40px; background: #93e4be; color: var(--deep-navy); min-width: 165px; font-weight: 600; }
+.answer-call svg { width: 18px; height: 18px; flex-shrink: 0; }
+.voice-demo button.silence-call { background: transparent; border: 1px solid var(--border); border-radius: 40px; font-size: 13px; }
+.answer-ringing { animation: answer-glow 3s ease-out infinite; }
+.call-card .call-actions { margin-top: 24px; }
+.call-card>small { display: block; font-size: 11px; line-height: 1.6; min-height: 18px; }
+@keyframes incoming-wave { 0% { transform: scale(1); opacity: .6; } 85%, 100% { transform: scale(1.75); opacity: 0; } }
+@keyframes phone-wiggle { 0%, 22%, 100% { transform: rotate(0); } 4%, 12% { transform: rotate(-14deg); } 8%, 16% { transform: rotate(14deg); } }
+@keyframes answer-glow { 0%, 65%, 100% { box-shadow: 0 0 0 0 #93e4be00; } 18% { box-shadow: 0 0 0 8px #93e4be15; } }
+@media (max-width: 680px) { .voice-demo .call-card { padding: 18px 20px 26px; } }
+@media (prefers-reduced-motion: reduce) { .incoming-call .ring-wave, .incoming-call .caller-phone svg, .answer-ringing { animation: none; } .incoming-call .wave-one { opacity: .3; transform: scale(1.4); } }
 @media (hover: hover) {
   .voice-demo button:hover:not(:disabled) { background: var(--cornsilk); color: var(--deep-navy); }
   .voice-demo button.end-call:hover:not(:disabled) { background: var(--accent); color: var(--cornsilk); }

@@ -8,7 +8,7 @@ English conversation with ElevenLabs over WebRTC. No Twilio, telephone number, o
 2. Copy `.env.example` to `.env` if it does not exist. Set `ELEVENLABS_API_KEY` to a key with Agents and Tools permissions. Keep it out of chat and Git.
 3. Run `npm run voice:setup`. It creates three client tools and a private English agent, then saves `ELEVENLABS_AGENT_ID` to `.env`. Existing agent IDs are left unchanged; tool IDs are saved for resuming partial setup.
 4. Run (or restart) `npm run dev`. Open the shop dashboard at <http://localhost:5173> and the call page at <http://localhost:5173/voice> side by side.
-5. Reset the demo and cancel Chris’s 3:00 PM appointment on the dashboard. Then click **Accept call · Jordan** on the call page, allow the microphone, and speak. Use headphones.
+5. Reset the demo and cancel Chris’s 3:00 PM appointment on the dashboard. Then click **Answer · Jordan** on the call page, allow the microphone, and speak. Use headphones.
 
 If an ElevenLabs agent already works, reuse its ID and skip agent creation.
 
@@ -17,6 +17,10 @@ For agents created before automatic hangup was added, run `npm run voice:update`
 The setup uses ElevenLabs' default voice/LLM. You can change them in the ElevenLabs dashboard. The agent receives shop/customer/appointment information via dynamic variables. There is a five-minute conversation cap. API keys remain on the backend; the browser receives only a conversation token.
 
 For a phone, expose Vite port 5173 through an HTTPS tunnel and allow that hostname in Vite if necessary. Plain `http://192.168…` will not provide browser microphone access. Both the page and `/api` must use the same origin. The current endpoints are for a trusted hackathon demo, with no application login.
+
+## Incoming call experience
+
+On `/voice`, click **Enable ringtone** once before the demo. Browsers require a click to unlock sound; this setting lasts while the tab stays open. A new manager offer shows the shop and selected customer with animated ringing and a soft two-burst ringtone. **Answer** stops ringing before microphone setup; **Silence** only mutes the current offer and does not decline it. The next offer rings again. Ringing stops when another tab claims the call, the demo resets, or the page closes. Reduced-motion preferences disable the pulsing animations.
 
 ## Try these conversations
 
