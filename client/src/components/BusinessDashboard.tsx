@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import { useDemoData } from '../context/DemoDataContext';
 import {
   Calendar as CalendarIcon,
@@ -15,9 +16,11 @@ import {
   ShieldCheck,
   DollarSign,
   Radio,
+  LogOut,
 } from 'lucide-react';
 
 export const BusinessDashboard: React.FC = () => {
+  const { logout } = useAuth();
   const {
     bookings,
     waitlist,
@@ -58,23 +61,33 @@ export const BusinessDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div className="bg-[#010736] rounded-2xl p-3.5 border border-[#22396f] text-center">
-            <span className="text-[11px] text-[#d8ceb2] font-medium block">Active Bookings</span>
-            <span className="text-xl font-bold font-mono text-[#fcf1d0]">
-              {bookings.filter((b) => b.status === 'confirmed').length}
-            </span>
+        <div className="flex flex-col sm:items-end gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="bg-[#010736] rounded-2xl p-3.5 border border-[#22396f] text-center">
+              <span className="text-[11px] text-[#d8ceb2] font-medium block">Active Bookings</span>
+              <span className="text-xl font-bold font-mono text-[#fcf1d0]">
+                {bookings.filter((b) => b.status === 'confirmed').length}
+              </span>
+            </div>
+            <div className="bg-[#010736] rounded-2xl p-3.5 border border-[#22396f] text-center">
+              <span className="text-[11px] text-[#d8ceb2] font-medium block">Waitlist Queue</span>
+              <span className="text-xl font-bold font-mono text-[#fcf1d0]">
+                {waitlist.filter((w) => w.status === 'waiting' || w.status === 'calling').length}
+              </span>
+            </div>
+            <div className="col-span-2 sm:col-span-1 bg-[#010736] rounded-2xl p-3.5 border border-[#22396f] text-center">
+              <span className="text-[11px] text-[#d8ceb2] font-medium block">Refill Rate</span>
+              <span className="text-xl font-bold font-mono text-emerald-300">100%</span>
+            </div>
           </div>
-          <div className="bg-[#010736] rounded-2xl p-3.5 border border-[#22396f] text-center">
-            <span className="text-[11px] text-[#d8ceb2] font-medium block">Waitlist Queue</span>
-            <span className="text-xl font-bold font-mono text-[#fcf1d0]">
-              {waitlist.filter((w) => w.status === 'waiting' || w.status === 'calling').length}
-            </span>
-          </div>
-          <div className="col-span-2 sm:col-span-1 bg-[#010736] rounded-2xl p-3.5 border border-[#22396f] text-center">
-            <span className="text-[11px] text-[#d8ceb2] font-medium block">Refill Rate</span>
-            <span className="text-xl font-bold font-mono text-emerald-300">100%</span>
-          </div>
+
+          <button
+            onClick={logout}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-300 hover:text-rose-100 hover:bg-rose-950/40 rounded-xl transition-colors border border-rose-900/60 cursor-pointer shadow-xs self-start sm:self-end"
+          >
+            <LogOut size={13} />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
 
