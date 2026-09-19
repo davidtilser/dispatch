@@ -10,7 +10,9 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "paths": {
-      "@getitdone/shared": ["../shared/src/index.ts"]
+      "@getitdone/shared": ["../shared/src/index.ts"],
+      "@getitdone/shared/types.js": ["../shared/src/types.ts"],
+      "@getitdone/shared/types": ["../shared/src/types.ts"]
     }
   },
   "include": ["src"]
