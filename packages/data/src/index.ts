@@ -15,6 +15,5 @@ export interface BookingRepository {
   }): Promise<{ bookingId: string; kind?: 'replacement' | 'alternative' }>;
   waiveCancellationFee(slotId: string): Promise<void>;
 }
-export { SqliteBookings, DEMO_DATE, demoTime, localTime } from './sqlite.js';
-
-export { localDate, DEMO_LAST_DATE, BUSINESS_TIMEZONE, validDemoDate, spokenCalendarDate } from './calendar.js';
+export { SqliteBookings } from './sqlite.js';
+export { DEMO_DATE, DEMO_LAST_DATE, demoDate, demoTime, localTime, localDate, TIMEZONE, BUSINESS_TIMEZONE, addDays, validDemoDate, spokenCalendarDate } from './calendar.js';

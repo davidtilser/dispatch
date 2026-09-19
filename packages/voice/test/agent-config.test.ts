@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { dynamicVariables } from '../dist/demo.js';
-import { dispatchFirstMessage, dispatchTools, legacyNaturalSpeechInstructions } from '../dist/agent-config.js';
+import { bookingDecisionInstructions, dispatchPrompt, supersededInstructions, dispatchFirstMessage, dispatchTools, legacyNaturalSpeechInstructions } from '../dist/agent-config.js';
 import { enableAutomaticHangup, inspectCalendarTools } from '../dist/update-agent.js';
 
 test('existing agent gains natural speech and end_call while preserving custom instructions; updates are repeatable', async () => {
@@ -33,7 +33,7 @@ test('existing agent gains natural speech and end_call while preserving custom i
       assert.deepEqual(Object.keys(body.conversation_config), ['agent']);
       assert.deepEqual(Object.keys(body.conversation_config.agent).sort(), ['dynamic_variables', 'first_message', 'prompt']);
       assert.deepEqual(body.conversation_config.agent.dynamic_variables.dynamic_variable_placeholders,
-        { business_name: 'Existing shop', discount: '', discount_offer: '', reference_date: '2026-09-19', appointment_date: '2026-09-19' });
+        { business_name: 'Existing shop', discount: '', discount_offer: '', reference_date: '2026-09-19', appointment_date: '2026-09-19', calendar_start_date: '2026-09-19', calendar_end_date: '2026-09-25' });
       agent.conversation_config.agent.dynamic_variables = body.conversation_config.agent.dynamic_variables;
       assert.equal(body.conversation_config.agent.first_message, dispatchFirstMessage);
       agent.conversation_config.agent.first_message = body.conversation_config.agent.first_message;
@@ -51,6 +51,9 @@ test('existing agent gains natural speech and end_call while preserving custom i
       assert.match(patch.prompt, /explicitly highlight this discount in the initial offer/);
       assert.doesNotMatch(patch.prompt, /Never offer discounts/);
       assert.doesNotMatch(patch.prompt, /The customer can end the web call/);
+      assert.match(patch.prompt, /all mean yes: call accept_slot for that time immediately/);
+      assert.match(patch.prompt, /A no is final/);
+      for (const sentence of supersededInstructions) assert.ok(!patch.prompt.includes(sentence), `superseded: ${sentence}`);
       if (updates) assert.equal(patch.prompt, agent.conversation_config.agent.prompt.prompt);
       Object.assign(agent.conversation_config.agent.prompt, patch);
       updates++;
@@ -111,4 +114,14 @@ test('calendar update preflight rejects a shared tool before any mutation', asyn
   } } as unknown as ElevenLabsClient;
   await assert.rejects(enableAutomaticHangup(client, 'agent_test'), /shared with another agent/);
   assert.equal(mutated, false);
+});
+
+test('the prompt tells the agent to book on a plain yes and never push after a no', () => {
+  assert.ok(dispatchPrompt.includes(bookingDecisionInstructions), 'setup prompt carries the decision rules');
+  assert.match(bookingDecisionInstructions, /Never ask the customer to confirm a time they already accepted/);
+  assert.match(bookingDecisionInstructions, /After a decline never offer another time/);
+  assert.match(bookingDecisionInstructions, /Mention other times only if the customer asks/);
+  // Both outcomes must hang up, not just the decline.
+  assert.match(bookingDecisionInstructions, /After accept_slot or decline_slot returns ok: true, say one short goodbye and use end_call/);
+  for (const sentence of supersededInstructions) assert.ok(!dispatchPrompt.includes(sentence), `superseded: ${sentence}`);
 });

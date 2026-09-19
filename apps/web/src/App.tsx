@@ -5,6 +5,7 @@ import { AppHeader } from './AppHeader';
 import './dashboard.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AnimatedMoney, DispatchOrbit, Signal } from './MotionUI';
+import { LiveRefill } from './refill/LiveRefill';
 
 const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
@@ -13,7 +14,6 @@ export function App() {
   const [data, setData] = useState<DemoDashboard>();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('2026-09-19');
   async function refresh() {
     const response = await fetch('/api/demo/dashboard');
     if (!response.ok) throw new Error('Dashboard unavailable. Check that the API is running.');
@@ -38,7 +38,6 @@ export function App() {
       const response = await fetch(`/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message ?? 'Request failed');
-      if (path === 'demo/reset') setSelectedDate('2026-09-19');
       await refresh();
     } catch (err) { setError(err instanceof Error ? err.message : 'Request failed'); }
     finally { setBusy(false); }
@@ -54,13 +53,12 @@ export function App() {
     : undefined;
 
   const booked = data?.bookings.filter(b => b.status !== 'cancelled').length ?? 0;
-  const dayBookings = data?.bookings.filter(b => new Date(b.startsAt).toLocaleDateString('en-CA', { timeZone: data.timezone }) === selectedDate) ?? [];
   const waiting = data?.waitlist.filter(c => c.status === 'waiting').length ?? 0;
-  const dateLabel = new Date(`${selectedDate}T12:00:00Z`).toLocaleDateString('en-US', {
+  const dateLabel = new Date(`${data?.date ?? '2026-09-19'}T12:00:00Z`).toLocaleDateString('en-US', {
     timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric',
   });
 
-  return <main className="dashboard">
+  return <main className={`dashboard ${data?.run ? 'refill-live' : ''}`}>
     <AppHeader view="shop" onReset={() => void action('demo/reset')} resetDisabled={busy || !data} />
     <header className="shop-header">
       <div className="shop-intro">
@@ -72,14 +70,13 @@ export function App() {
       <div className="shop-counts"><span><strong>{data ? booked : '—'}</strong> active bookings</span><span><strong>{data ? waiting : '—'}</strong> on the waitlist</span><span><ShieldCheck size={14} aria-hidden="true" /> One slot. One happy customer.</span></div>
     </header>
     <div className="workspace-heading"><div><span className="eyebrow">THE BIG PICTURE</span><h2>Your day, in motion.</h2></div><div className="day-label">
-      <label>Calendar day <select aria-label="Calendar day" value={selectedDate} onChange={event => setSelectedDate(event.target.value)}>
-        {Array.from({ length: 7 }, (_, i) => `2026-09-${19 + i}`).map(date => <option key={date} value={date}>{new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</option>)}
-      </select></label>
       <span className="date-title"><CalendarDays size={14} aria-hidden="true" /><strong>{dateLabel}</strong></span>
       <small><i /> Live calendar · Pacific time</small>
     </div></div>
 
     {error && <p role="alert" className="dashboard-error">{error} <button className="quiet" onClick={() => { setError(''); void refresh().catch(() => setError('API unavailable')); }}>Retry</button></p>}
+
+    {data && <LiveRefill data={data} busy={busy} onCancel={slotId => void action(`slots/${slotId}/cancel`)} />}
 
     <div className="metrics">
       <article className="revenue-metric"><div className="metric-label"><span>Recovered revenue</span><DollarSign size={17} aria-hidden="true" /></div><strong><AnimatedMoney cents={recovered} /></strong><small>From replacement bookings</small></article>
@@ -102,15 +99,15 @@ export function App() {
     </ol>
     <div className="shop-grid">
       <section className="agenda">
-        <div className="section-title"><div><p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Selected day’s agenda</p><h2>Day’s appointments</h2></div><span className="count-pill">{data ? dayBookings.filter(b => b.status !== 'cancelled').length : '—'} booked</span></div>
+        <div className="section-title"><div><p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Today’s agenda</p><h2>Day’s appointments</h2></div><span className="count-pill">{data ? booked : '—'} booked</span></div>
         <p className="section-subtitle">45-minute haircuts · $45 · Cancellation fee $15</p>
         {inProgress && <div className="refill-notice" id="cancel-blocked-reason" role="status"><strong>One refill at a time</strong><p>{cancellationBlockedReason}</p><button className="cancel-button" disabled={busy} onClick={() => void action('demo/reset')}>Reset demo to start over</button><small>Reset restores all demo bookings and clears the current call.</small></div>}
         <div className="agenda-list">
           {!data && <p role="status">Loading calendar…</p>}
-          <AnimatePresence initial={false}>{dayBookings.map(b => <motion.article layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }} key={b.id} className={`appointment ${b.status}`}>
+          <AnimatePresence initial={false}>{data?.bookings.map(b => <motion.article layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }} key={b.id} className={`appointment ${b.status}`}>
             <div className="appointment-main">
-              <div className="appointment-time"><Clock3 size={17} aria-hidden="true" /><strong>{time(b.startsAt)}</strong></div>
-              <div className="appointment-person"><div className="person-heading"><strong>{b.customerName}</strong><span className={`badge ${b.status}`}>{b.status === 'alternative' ? 'Separate booking' : b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}</span></div><span>{b.service} · {b.durationMinutes} min · {money(b.priceCents)}</span>{b.status === 'replacement' && <small className="fee-waived"><Check size={12} aria-hidden="true" />Booked by Dispatch</small>}</div>
+              <div className="appointment-time"><Clock3 size={17} aria-hidden="true" /><strong>{time(b.startsAt)}</strong>{new Date(b.startsAt).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) !== data?.date && <small>{new Date(b.startsAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric' })}</small>}</div>
+              <div className="appointment-person"><div className="person-heading"><strong>{b.customerName}</strong><span className={`badge ${b.status}`}>{b.status === 'replacement' ? 'Refilled' : b.status === 'cancelled' ? 'Cancelled' : b.status === 'alternative' ? 'Separate booking' : 'Confirmed'}</span></div><span>{b.service} · {b.durationMinutes} min · {money(b.priceCents)}</span>{b.status === 'replacement' && <small className="fee-waived"><Check size={12} aria-hidden="true" />Booked by Dispatch</small>}</div>
             </div>
             <div className="appointment-actions">
               {b.status === 'cancelled' && <div className={`fee-status ${b.feeStatus === 'waived' ? 'fee-waived' : ''}`}><strong>{b.feeStatus === 'waived' ? <ShieldCheck size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}{money(b.cancellationFeeCents)} fee {b.feeStatus === 'waived' ? 'waived' : 'pending'}</strong><small>{b.feeStatus === 'waived' ? 'Spot refilled from the waitlist' : 'Waived when this spot is filled'}</small></div>}
@@ -127,9 +124,10 @@ export function App() {
           <p className="section-subtitle">Called in order. First acceptance wins.</p>
           <div className="waitlist-list">{data?.waitlist.map((c, i) => {
             const active = data.offer?.customerName === c.name;
+            const alternate = data.bookings.find(b => b.customerId === c.id && b.status === 'alternative');
             return <div className={`waitlist-person ${active ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`} key={c.id}>
               <span className="queue-number">{String(i + 1).padStart(2, '0')}</span>
-              <div><strong>{c.name}</strong><small>{c.status === 'booked' ? 'Appointment booked' : active ? 'Current candidate' : `Waitlist · ${i + 1}`}</small></div>
+              <div><strong>{c.name}</strong><small>{c.status === 'booked' ? alternate ? 'Separate appointment booked' : 'Replacement booked' : active ? 'Current candidate' : `Waitlist · ${i + 1}`}</small></div>
               <span className={`queue-status ${active ? 'active' : ''} ${c.status === 'booked' ? 'booked' : ''}`}>{c.status === 'booked' ? <><Check size={11} aria-hidden="true" />Booked</> : active ? <><PhoneCall size={11} aria-hidden="true" />{data.offer?.sessionActive ? 'In call' : 'Up next'}</> : 'Waiting'}</span>
             </div>;
           })}</div>

@@ -1,0 +1,101 @@
+.live-refill { margin: 24px 0; color: var(--text-primary); }
+.refill-story-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.refill-kicker { display: flex; align-items: center; gap: 7px; letter-spacing: .14em; font-size: 10px; color: var(--text-muted); }
+.refill-story-heading h2 { font-size: 24px; letter-spacing: -.7px; margin: 8px 0 0; }
+.refill-story-heading button, .refill-story-heading a { flex-shrink: 0; padding: 12px 16px; background: var(--cornsilk); color: var(--deep-navy); border: 0; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 650; text-decoration: none; cursor: pointer; }
+.refill-story-heading button:disabled { opacity: .5; cursor: wait; }
+.refill-story-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.live-refill section { min-width: 0; padding: 20px 24px; margin: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); }
+.refill-panel-title { display: flex; align-items: center; gap: 8px; }
+.refill-panel-title h3 { font-size: 15px; margin: 0; }
+.refill-panel-title>span { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.refill-other-bookings { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 18px; color: var(--text-muted); font-size: 11px; }
+.refill-other-bookings b { font-weight: 500; margin-left: 3px; }
+.refill-timeline-scroll { overflow-x: auto; padding: 0 6px; }
+.refill-timeline { min-width: 440px; }
+.refill-time-axis { height: 23px; position: relative; margin-top: 4px; }
+.refill-time-axis span { position: absolute; transform: translateX(-50%); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.refill-time-axis span:first-child { transform: none; }
+.refill-time-axis span:last-child { transform: translateX(-100%); }
+.refill-track-label { font-size: 9px; color: var(--text-muted); letter-spacing: .07em; margin: 10px 0 6px; }
+.refill-track { position: relative; height: 70px; background: repeating-linear-gradient(to right, var(--border) 0, var(--border) 1px, transparent 1px, transparent 16.6667%), var(--page-background); border-radius: 7px; }
+.refill-opening-track, .refill-conflict-track { height: 48px; }
+.refill-time-block { position: absolute; inset-block: 0; padding: 8px; display: flex; flex-direction: column; justify-content: center; gap: 5px; border: 1px solid color-mix(in srgb, var(--cornsilk) 30%, var(--border)); border-radius: 7px; background: var(--accent); overflow: hidden; transition: left .55s, width .55s; }
+.refill-time-block strong { font-size: 12px; white-space: nowrap; }
+.refill-time-block span, .refill-time-block small { font-size: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.refill-time-block.replacement { background: var(--cornsilk); color: var(--deep-navy); animation: refill-arrive .6s ease-out; }
+.refill-time-block.cancelled { background: transparent; border: 1px dashed var(--warning); color: var(--warning); animation: refill-arrive .6s ease-out; }
+.refill-time-block.conflict { background: var(--danger-surface); border: 1px dashed var(--danger); color: var(--danger); animation: refill-arrive .4s ease-out; }
+.refill-calendar-note { font-size: 12px; line-height: 1.6; color: var(--text-muted); margin: 14px 0 0; }
+.refill-calendar-note.saved { color: var(--cornsilk); }
+.refill-actions-caption { font-size: 11px; color: var(--text-muted); margin: 8px 0 12px; }
+.refill-action-list { padding: 0; margin: 0; list-style: none; max-height: 350px; overflow-y: auto; scrollbar-width: thin; }
+.refill-action { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-top: 1px solid var(--border); animation: refill-arrive .35s ease-out; }
+.refill-action-icon { display: grid; place-items: center; flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--text-muted); }
+.refill-action strong { font-size: 13px; line-height: 1.5; }
+.refill-action p { font-size: 11px; line-height: 1.55; margin: 3px 0 0; color: var(--text-muted); }
+.refill-action time { margin-left: auto; font-size: 9px; padding-top: 4px; color: var(--text-muted); flex-shrink: 0; }
+.refill-action.warning .refill-action-icon { color: var(--warning); }
+.refill-action.success .refill-action-icon { color: var(--success); background: var(--success-surface); }
+.refill-empty { color: var(--text-muted); font-size: 13px; line-height: 1.8; padding: 28px 0; }
+.refill-win { display: flex; align-items: center; gap: 14px; padding: 20px 24px; background: var(--cornsilk); color: var(--deep-navy); border-radius: 15px; margin-bottom: 16px; animation: refill-arrive .6s ease-out; }
+.refill-win strong { font-size: 21px; letter-spacing: -.5px; }
+.refill-win span { display: block; margin-top: 6px; font-size: 12px; }
+.refill-unfilled { font-size: 12px; color: var(--warning); }
+.live-refill-voice { margin: 0; min-width: 0; }
+.live-refill-voice .refill-story-grid { grid-template-columns: 1fr; gap: 14px; }
+.live-refill-voice .refill-story-heading h2 { font-size: 20px; }
+.live-refill-voice .refill-action-list { max-height: 270px; }
+.live-refill-voice .refill-win strong { font-size: 18px; }
+.voice-demo .voice-grid:has(.live-refill) { grid-template-columns: minmax(300px, .75fr) minmax(0, 1.25fr); align-items: start; }
+.voice-call-column { min-width: 0; }
+.voice-call-column .transcript { max-height: 230px; }
+@keyframes refill-arrive { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1000px) { .refill-story-grid { grid-template-columns: 1fr; } .voice-demo .voice-grid:has(.live-refill) { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .refill-story-heading { flex-wrap: wrap; } .refill-story-heading h2 { font-size: 21px; } .live-refill section { padding: 18px 14px; } .refill-panel-title { flex-wrap: wrap; } .refill-win strong { font-size: 18px; } .refill-win { padding: 16px; } }
+@media (prefers-reduced-motion: reduce) { .live-refill *, .live-refill *::before { animation: none !important; transition: none !important; } }
+.refill-days { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.live-refill .refill-days button { font: inherit; font-size: 10px; background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 6px 10px; border-radius: 7px; cursor: pointer; }
+.live-refill .refill-days button[aria-pressed=true] { background: var(--accent); color: var(--text-primary); border-color: var(--text-muted); }
+.refill-call-context { font-size: 11px; line-height: 1.7; color: var(--text-muted); }
+/* During a refill, keep the work itself on the presentation screen. */
+.dashboard.refill-live .shop-header { margin: 18px 0; padding: 18px 28px 0; grid-template-columns: 1fr 220px; }
+.dashboard.refill-live .shop-header h1 { font-size: 27px; margin: 10px 0 12px; }
+.dashboard.refill-live .shop-header h1 br { display: none; }
+.dashboard.refill-live .shop-header h1 span::before { content: ' '; }
+.dashboard.refill-live .shop-intro>p { display: none; }
+.dashboard.refill-live .dispatch-orbit { height: 80px; transform: scale(.52); transform-origin: center; }
+.dashboard.refill-live .orbit-label { display: none; }
+.dashboard.refill-live .shop-counts { margin-top: 9px; padding: 12px 0; }
+.dashboard.refill-live .workspace-heading { margin-bottom: 10px; }
+.dashboard.refill-live .workspace-heading h2 { font-size: 18px; }
+.dashboard.refill-live .live-refill { margin-top: 16px; }
+@media (min-width: 1001px) {
+  .voice-demo:has(.live-refill) header { margin: 20px 0; }
+  .voice-demo:has(.live-refill) h1 { font-size: 34px; }
+  .voice-demo:has(.live-refill) .call-card { padding: 16px 22px; }
+  .voice-demo:has(.live-refill) .caller-portrait { height: 122px; margin: 6px auto; transform: scale(.78); }
+  .voice-demo:has(.live-refill) .caller-label { margin-top: 16px; }
+  .voice-demo:has(.live-refill) .caller-name { font-size: 26px; margin: 8px 0; }
+  .voice-demo:has(.live-refill) .call-actions { margin: 12px 0; }
+  .voice-demo:has(.live-refill) .transcript-card { padding: 18px 22px; }
+  .voice-demo:has(.live-refill) .transcript-card h2 { margin: 8px 0; }
+  .voice-demo:has(.live-refill) .transcript { margin-top: 10px; }
+}
+/* Match the surrounding voice styles without their generic 30px card padding. */
+.voice-demo .live-refill section { padding: 18px 16px; }
+.voice-demo .live-refill .refill-other-bookings { margin: 12px 0; }
+.voice-demo .live-refill .refill-time-block small { color: inherit; }
+@media (min-width: 1250px) {
+  .voice-demo:has(.live-refill) { max-width: 1600px; padding-inline: 32px; }
+  .voice-demo .voice-grid:has(.live-refill) { grid-template-columns: 320px minmax(0, 1fr); }
+  .live-refill-voice .refill-story-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .live-refill-voice .refill-timeline { min-width: 360px; }
+  .live-refill-voice .refill-action-list { max-height: 400px; }
+  .voice-demo:has(.live-refill) .caller-portrait { width: 210px; }
+  .voice-demo:has(.live-refill) .call-topline { gap: 6px; }
+  .voice-demo:has(.live-refill) .call-status { font-size: 9px; }
+  .voice-demo:has(.live-refill) .ringtone-toggle { font-size: 9px; padding: 8px; }
+}
+
+.live-refill .refill-time-block small { color: inherit; }

@@ -30,6 +30,8 @@ export interface VoiceDemoContext {
   date: string;
   timezone: string;
   referenceDate?: string;
+  calendarStartDate?: string;
+  calendarEndDate?: string;
   offeredTime: string;
   availableTimes: string[];
 }

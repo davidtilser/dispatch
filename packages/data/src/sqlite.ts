@@ -3,9 +3,9 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { BookingRepository } from './index.js';
-import type { DemoBooking, DemoDashboard, DemoEvent, AvailabilityRequest, AvailableSlot } from '@dispatch/contracts';
+import type { DemoAction, DemoBooking, DemoDashboard, DemoEvent, AvailabilityRequest, AvailableSlot } from '@dispatch/contracts';
 
-import { DEMO_DATE, demoTime, localTime, localDate, validDemoDate, candidateTimes, spokenCalendarDate } from './calendar.js';
+import { DEMO_DATE, DEMO_LAST_DATE, addDays, demoTime, localTime, localDate, validDemoDate, candidateTimes, spokenCalendarDate } from './calendar.js';
 export { DEMO_DATE, demoTime, localTime } from './calendar.js';
 
 // A single-barber calendar, backed by Node 24's built-in SQLite. No external service.
@@ -17,7 +17,14 @@ export class SqliteBookings implements BookingRepository {
     this.db.exec(`CREATE TABLE IF NOT EXISTS clients (id TEXT PRIMARY KEY, name TEXT, phone TEXT, waitlist INTEGER, booked INTEGER DEFAULT 0);
       CREATE TABLE IF NOT EXISTS bookings (id TEXT PRIMARY KEY, data TEXT NOT NULL, idempotency_key TEXT UNIQUE);
       CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, message TEXT);`);
-    if (!this.db.prepare('SELECT id FROM clients LIMIT 1').get()) this.reset();
+    // Additive migration: existing demo databases and their text activity remain usable.
+    if (!this.db.prepare('PRAGMA table_info(events)').all().some(column => column.name === 'action')) {
+      this.db.exec('ALTER TABLE events ADD COLUMN action TEXT');
+    }
+    // A database kept from an earlier demo day holds past times; reseed it onto today's demo date.
+    const seeded = this.db.prepare('SELECT data FROM bookings LIMIT 1').get();
+    const staleDay = !!seeded && !(JSON.parse(String(seeded.data)) as DemoBooking).startsAt.startsWith(DEMO_DATE);
+    if (staleDay || !this.db.prepare('SELECT id FROM clients LIMIT 1').get()) this.reset();
   }
   close() { this.db.close(); }
   reset() {
@@ -31,7 +38,7 @@ export class SqliteBookings implements BookingRepository {
           service: 'Haircut', priceCents: 4500, currency: 'USD', customerId: `client_${i}`, customerName: names[i]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' };
         this.save(booking);
       });
-      this.save({ id: 'slot_tomorrow', businessId: 'biz_001', startsAt: demoTime('13:00', '2026-09-20'), durationMinutes: 45,
+      this.save({ id: 'slot_tomorrow', businessId: 'biz_001', startsAt: demoTime('13:00', addDays(DEMO_DATE, 1)), durationMinutes: 45,
         service: 'Haircut', priceCents: 4500, currency: 'USD', customerId: 'client_0', customerName: names[0]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' });
       this.log('Demo reset. Calendar and waitlist ready. No real payments or calendar integrations.');
       this.db.exec('COMMIT');
@@ -43,8 +50,15 @@ export class SqliteBookings implements BookingRepository {
   waitlist(): DemoDashboard['waitlist'] {
     return this.db.prepare('SELECT * FROM clients WHERE waitlist = 1 ORDER BY id').all().map(row => ({ id: String(row.id), name: String(row.name), phoneE164: String(row.phone), status: row.booked ? 'booked' : 'waiting' }));
   }
-  events(): DemoEvent[] { return this.db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 80').all() as unknown as DemoEvent[]; }
-  log(message: string) { this.db.prepare('INSERT INTO events (time,message) VALUES (?,?)').run(new Date().toISOString(), message); }
+  events(): DemoEvent[] {
+    return this.db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT 80').all().map(row => ({
+      id: Number(row.id), time: String(row.time), message: String(row.message),
+      ...(row.action ? { action: JSON.parse(String(row.action)) as DemoAction } : {}),
+    }));
+  }
+  log(message: string, action?: DemoAction) {
+    this.db.prepare('INSERT INTO events (time,message,action) VALUES (?,?,?)').run(new Date().toISOString(), message, action ? JSON.stringify(action) : null);
+  }
   async getSlot(id: string): Promise<DemoBooking | null> {
     const row = this.db.prepare('SELECT data FROM bookings WHERE id = ?').get(id);
     return row ? JSON.parse(String(row.data)) : null;
@@ -55,7 +69,7 @@ export class SqliteBookings implements BookingRepository {
     if (!slot || (slot.status === 'replacement' || slot.status === 'alternative') || slot.feeStatus === 'waived') throw new Error('This booking cannot be cancelled in this demo.');
     if (slot.status === 'cancelled') return;
     this.save({ ...slot, status: 'cancelled', feeStatus: 'pending' });
-    this.log(`${slot.customerName} cancelled ${localTime(slot.startsAt)}. $15 cancellation fee pending refill.`);
+    this.log(`${slot.customerName} cancelled ${localTime(slot.startsAt)}. $${slot.cancellationFeeCents / 100} cancellation fee pending refill.`, { kind: 'cancelled', source: 'calendar', slotId: id, customerName: slot.customerName, startsAt: slot.startsAt, durationMinutes: slot.durationMinutes });
   }
   async availableTimes(id: string) {
     const slot = await this.getSlot(id);
@@ -89,11 +103,11 @@ export class SqliteBookings implements BookingRepository {
     const start = Date.parse(startsAt), end = start + slot.durationMinutes * 60_000;
     if (!Number.isFinite(start)) return { available: false, reason: 'Invalid appointment time.' };
     const date = localDate(startsAt);
-    if (!validDemoDate(date)) return { available: false, reason: 'Choose a day from September 19 through September 25.' };
+    if (!validDemoDate(date)) return { available: false, reason: `Choose a day from ${DEMO_DATE} through ${DEMO_LAST_DATE}.` };
     if (start < Date.parse(demoTime('09:00', date)) || end > Date.parse(demoTime('18:00', date))) return { available: false, reason: 'The appointment must fit within business hours, 9 AM to 6 PM.' };
     const conflict = this.bookings().find(b => b.businessId === slot.businessId && b.status !== 'cancelled' && start < Date.parse(b.startsAt) + b.durationMinutes * 60_000 && end > Date.parse(b.startsAt));
     if (conflict) return { available: false, reason: 'That time overlaps another appointment.', conflict: { bookingId: conflict.id, customerName: conflict.customerName, startsAt: conflict.startsAt, durationMinutes: conflict.durationMinutes } };
-    return { available: true, reason: 'The full service fits in the shared calendar.' };
+    return { available: true, reason: 'The full service fits in the shared calendar. No booking made.' };
   }
   async isAvailable(id: string, startsAt: string) { return this.availability(id, startsAt).available; }
   async bookReplacement(input: { slotId: string; contactId: string; startsAt: string; idempotencyKey: string }) {
@@ -117,7 +131,7 @@ export class SqliteBookings implements BookingRepository {
       this.save({ ...slot, id: bookingId, startsAt: input.startsAt, customerId: client.id, customerName: client.name,
         status: kind, feeStatus: 'not_due', ...(kind === 'replacement' ? { replacesSlotId: slot.id } : {}) }, input.idempotencyKey);
       this.db.prepare('UPDATE clients SET booked = 1 WHERE id = ?').run(client.id);
-      this.log(`Booked ${client.name} on ${localDate(input.startsAt)} at ${localTime(input.startsAt)}. ${kind === 'replacement' ? 'Replacement saved to the demo calendar.' : 'Separate appointment saved; original gap and cancellation fee remain pending.'}`);
+      this.log(`Booked ${client.name} on ${localDate(input.startsAt)} at ${localTime(input.startsAt)}. ${kind === 'replacement' ? 'Replacement saved to the demo calendar.' : 'Separate appointment saved; original gap and cancellation fee remain pending.'}`, { kind: kind === 'alternative' ? 'alternative_booked' : 'booking_saved', source: 'calendar', slotId: slot.id, customerName: client.name, startsAt: input.startsAt, durationMinutes: slot.durationMinutes, bookingId, amountCents: slot.priceCents });
       this.db.exec('COMMIT');
       return { bookingId, kind };
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
@@ -131,7 +145,7 @@ export class SqliteBookings implements BookingRepository {
     if (!slot || !this.bookings().some(b => b.status === 'replacement' && b.replacesSlotId === id && this.isRefillStart(slot, b.startsAt))) throw new Error('A replacement must exist before waiving the fee');
     if (slot.feeStatus === 'waived') return;
     this.save({ ...slot, feeStatus: 'waived' });
-    this.log(`${slot.customerName}’s $15 cancellation fee waived. Slot successfully refilled.`);
+    this.log(`${slot.customerName}’s $${slot.cancellationFeeCents / 100} cancellation fee waived. Slot successfully refilled.`, { kind: 'fee_waived', source: 'calendar', slotId: id, customerName: slot.customerName, amountCents: slot.cancellationFeeCents });
   }
   private save(booking: DemoBooking, key: string | null = null) {
     this.db.prepare('INSERT INTO bookings (id,data,idempotency_key) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET data = excluded.data').run(booking.id, JSON.stringify(booking), key);

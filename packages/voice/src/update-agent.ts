@@ -1,5 +1,5 @@
 import type { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { calendarInstructions, callEndingInstructions, discountInstructions, dispatchFirstMessage, dispatchTools, endCallTool, legacyNaturalSpeechInstructions, naturalSpeechInstructions } from './agent-config.js';
+import { bookingDecisionInstructions, supersededInstructions, calendarInstructions, callEndingInstructions, discountInstructions, dispatchFirstMessage, dispatchTools, endCallTool, legacyNaturalSpeechInstructions, naturalSpeechInstructions } from './agent-config.js';
 
 // Provider responses can add default fields or reorder schema keys.
 function containsExpected(actual: unknown, expected: unknown): boolean {
@@ -38,14 +38,14 @@ export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: s
   const placeholders = (current.conversationConfig.agent?.dynamicVariables as {
     dynamic_variable_placeholders?: Record<string, string>;
   } | undefined)?.dynamic_variable_placeholders;
-  const existing = (prompt?.prompt ?? '')
+  const existing = supersededInstructions.reduce((text, sentence) => text.replaceAll(sentence, ''), prompt?.prompt ?? '')
     .replace('After a confirmed booking or decline, say a short goodbye. The customer can end the web call.', '')
     .replace('Never offer discounts, invent services or availability,', 'Never invent services or availability,')
     .replace(legacyNaturalSpeechInstructions, '')
     .replace('If the customer requests another time, call check_availability with the local 24-hour HH:mm time.', '')
     .replace('Before confirming any booking, obtain explicit agreement to the exact time, then call accept_slot.', '')
     .replace('Available alternatives for this demo are {{available_times}}.', 'Initial starts for the original opening are {{available_times}}. Search the calendar for other times or days.').trim();
-  const updated = [callEndingInstructions, naturalSpeechInstructions, discountInstructions, calendarInstructions].reduce(
+  const updated = [callEndingInstructions, naturalSpeechInstructions, discountInstructions, calendarInstructions, bookingDecisionInstructions].reduce(
     (text, instructions) => text.includes(instructions) ? text : `${text}\n${instructions}`, existing,
   );
   // Preflight completed for every tool before any mutation. Retain each ID and
@@ -56,7 +56,7 @@ export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: s
   await client.conversationalAi.agents.update(agentId, {
     conversationConfig: { agent: { firstMessage: dispatchFirstMessage,
       dynamicVariables: { dynamic_variable_placeholders: {
-        ...placeholders, discount: '', discount_offer: '', reference_date: '2026-09-19', appointment_date: '2026-09-19',
+        ...placeholders, discount: '', discount_offer: '', reference_date: '2026-09-19', appointment_date: '2026-09-19', calendar_start_date: '2026-09-19', calendar_end_date: '2026-09-25',
       } }, prompt: {
       prompt: updated,
       builtInTools: { ...prompt?.builtInTools, endCall: endCallTool },
@@ -64,7 +64,7 @@ export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: s
   }, requestOptions);
   const verified = await client.conversationalAi.agents.get(agentId);
   if (verified.conversationConfig.agent?.prompt?.builtInTools?.endCall?.params.systemToolType !== 'end_call'
-    || ![callEndingInstructions, naturalSpeechInstructions, discountInstructions, calendarInstructions].every(instruction => verified.conversationConfig.agent?.prompt?.prompt?.includes(instruction))
+    || ![callEndingInstructions, naturalSpeechInstructions, discountInstructions, calendarInstructions, bookingDecisionInstructions].every(instruction => verified.conversationConfig.agent?.prompt?.prompt?.includes(instruction))
     || verified.conversationConfig.agent.firstMessage !== dispatchFirstMessage) {
     throw new Error('Voice agent configuration was not saved.');
   }

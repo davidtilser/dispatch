@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { NestFactory } from '@nestjs/core';
 import { VoiceModule } from '../dist/voice/voice.module.js';
-import { SqliteBookings, demoTime } from '@dispatch/data';
+import { spokenDate } from '@dispatch/voice';
+import { DEMO_DATE, SqliteBookings, demoTime, addDays } from '@dispatch/data';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { DatabaseSync } from 'node:sqlite';
 
 test('shared HTTP demo: cancellation → offer → voice tool → calendar booking → fee waiver', async () => {
   const realFetch = globalThis.fetch;
@@ -54,8 +56,8 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal(started.dynamicVariables.customer_name, 'Jordan Davis');
     assert.equal(started.dynamicVariables.offered_time, '3 PM');
     assert.equal(started.dynamicVariables.available_times, '3 PM, 3:30 PM');
-    assert.match(started.dynamicVariables.date, /^(today|tomorrow|Saturday, September 19th)$/);
-    assert.equal(started.session.context.date, '2026-09-19', 'booking context keeps its ISO date');
+    assert.equal(started.dynamicVariables.date, spokenDate(DEMO_DATE, 'America/Los_Angeles'));
+    assert.equal(started.session.context.date, DEMO_DATE, 'booking context keeps its ISO date');
     assert.match(started.session.managerBrief.disclosure, /Jordan Davis/);
     assert.match(started.session.managerBrief.offer, /45/);
     assert.equal((await post('voice/sessions')).status, 409, 'second tab cannot claim the same offer');
@@ -64,7 +66,18 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal((await post(`${path}/accept`, { time: '18:00' })).status, 409);
     assert.equal((await (await post(`${path}/check-availability`, { time: '16:00' })).json()).available, false, '45 minutes would overlap 16:30');
     assert.equal((await (await post(`${path}/check-availability`, { time: '15:30' })).json()).available, true);
-    assert.equal((await get('demo/dashboard')).bookings.length, 6, 'availability is not a booking');
+    const checked = await get('demo/dashboard');
+    assert.equal(checked.bookings.length, 6, 'availability is not a booking');
+    const checks = checked.events.filter((e: any) => e.action?.kind === 'availability_checked').reverse();
+    assert.equal(checks.length, 2);
+    assert.equal(checks[0].action.available, false);
+    assert.equal(checks[0].action.conflict.customerName, 'Oliver James');
+    assert.equal(checks[0].action.conflict.startsAt, demoTime('16:30'));
+    assert.equal(checks[1].action.available, true);
+    assert.equal(checks[1].action.startsAt, demoTime('15:30'));
+    assert.match(checks[1].action.reason, /No booking made/);
+    assert.equal(checked.events.some((e: any) => ['booking_saved', 'fee_waived'].includes(e.action?.kind)), false);
+    assert.equal(checked.events.find((e: any) => e.action?.kind === 'booking_requested').action.available, false, 'failed accept is recorded as rejected');
     const accepts = await Promise.all([post(`${path}/accept`, { time: '15:30' }), post(`${path}/accept`, { time: '15:30' })]);
     const [booked, duplicate] = await Promise.all(accepts.map(r => r.json()));
     assert.equal(booked.status, 'accepted');
@@ -84,11 +97,20 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     const bookingEvent = dashboard.events.find((e: any) => e.message.startsWith('Booked Jordan'));
     const waiverEvent = dashboard.events.find((e: any) => e.message.includes('fee waived'));
     assert.ok(bookingEvent.id < waiverEvent.id, 'fee waived after durable booking');
+    assert.equal(bookingEvent.action.kind, 'booking_saved');
+    assert.equal(bookingEvent.action.bookingId, booked.booking.id);
+    assert.equal(bookingEvent.action.amountCents, 4500);
+    assert.equal(waiverEvent.action.kind, 'fee_waived');
+    assert.equal(waiverEvent.action.amountCents, 1500);
+    assert.equal(dashboard.events.filter((e: any) => e.action?.kind === 'booking_saved').length, 1, 'duplicate acceptance does not invent another saved event');
+    const agreement = dashboard.events.find((e: any) => e.action?.kind === 'booking_requested' && e.action.available);
+    assert.ok(agreement.id < bookingEvent.id, 'tool request precedes saved booking');
     assert.deepEqual((await (await post(`${path}/end`, { reason: 'ended' })).json()).booking, booked.booking);
     assert.equal((await (await post(`${path}/decline`)).json()).status, 'accepted', 'late decline cannot undo first acceptance');
     assert.equal((await (await post('slots/slot_3pm/cancel')).json()).id, runs[0].id, 'completed cancellation is idempotent');
 
     await post('demo/reset');
+    assert.equal((await get('demo/dashboard')).events.filter((e: any) => e.action).length, 0, 'reset clears structured actions');
     assert.equal((await post(`${path}/accept`, { time: '15:30' })).status, 404, 'reset invalidates old calls');
     const nextRun = await (await post('slots/slot_3pm/cancel')).json();
     assert.notEqual(nextRun.id, runs[0].id);
@@ -111,6 +133,8 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal(afterEnd.bookings.length, 6);
     assert.equal(afterEnd.bookings.find((b: any) => b.id === 'slot_3pm').feeStatus, 'pending');
     assert.equal(afterEnd.offer.customerName, 'Taylor Wilson');
+    assert.equal(afterEnd.events.some((e: any) => e.action?.kind === 'booking_saved' || e.action?.kind === 'fee_waived'), false);
+    assert.ok(afterEnd.events.some((e: any) => e.action?.kind === 'call_ended' && e.action.outcome === 'declined'));
     const third = await (await post('voice/sessions')).json();
     await post(`voice/sessions/${third.session.id}/end`, { reason: 'failed' });
     assert.equal((await get('demo/dashboard')).run.status, 'exhausted');
@@ -120,14 +144,14 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     await post('slots/slot_3pm/cancel');
     const crossDay = await (await post('voice/sessions')).json();
     const crossPath = `voice/sessions/${crossDay.session.id}`;
-    const search = await (await post(`${crossPath}/check-availability`, { date: '2026-09-20', partOfDay: 'afternoon' })).json();
+    const search = await (await post(`${crossPath}/check-availability`, { date: addDays(DEMO_DATE, 1), partOfDay: 'afternoon' })).json();
     assert.equal(search.available, true);
-    assert.ok(search.availableSlots.every((slot: any) => slot.date === '2026-09-20'));
-    assert.equal((await post(`${crossPath}/accept`, { date: '2026-09-20', time: '14:00' })).status, 400);
-    assert.equal((await post(`${crossPath}/accept`, { date: '2026-09-20', time: '13:00', confirmed: true })).status, 409);
-    const dated = await (await post(`${crossPath}/accept`, { date: '2026-09-20', time: '14:00', confirmed: true })).json();
+    assert.ok(search.availableSlots.every((slot: any) => slot.date === addDays(DEMO_DATE, 1)));
+    assert.equal((await post(`${crossPath}/accept`, { date: addDays(DEMO_DATE, 1), time: '14:00' })).status, 400);
+    assert.equal((await post(`${crossPath}/accept`, { date: addDays(DEMO_DATE, 1), time: '13:00', confirmed: true })).status, 409);
+    const dated = await (await post(`${crossPath}/accept`, { date: addDays(DEMO_DATE, 1), time: '14:00', confirmed: true })).json();
     assert.equal(dated.status, 'alternative_booked');
-    assert.equal(dated.booking.date, '2026-09-20');
+    assert.equal(dated.booking.date, addDays(DEMO_DATE, 1));
     assert.equal(dated.feeWaived, false);
     assert.equal((await get('demo/dashboard')).offer.customerName, 'Sam Rivera');
     assert.equal((await post('voice/sessions')).status, 409);
@@ -159,10 +183,57 @@ test('SQLite persists bookings, clients and fees across reopen; reset restores s
     assert.deepEqual(await store.bookReplacement(input), booked);
     assert.equal((await store.getSlot('slot_3pm'))?.feeStatus, 'waived');
     assert.equal(store.bookings().length, 7);
+    assert.equal(store.events().find(e => e.action?.kind === 'booking_saved')?.action?.bookingId, booked.bookingId, 'structured actions survive reopen');
     assert.equal(store.waitlist()[0]?.status, 'booked');
     assert.equal(await store.isAvailable('slot_3pm', demoTime('15:00')), false);
     store.reset();
     assert.equal(store.bookings().length, 6);
     assert.equal(store.waitlist()[0]?.status, 'waiting');
+  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
+});
+
+
+test('opening an older demo database reseeds the calendar, waitlist and activity for tomorrow', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'dispatch-stale-day-'));
+  const path = join(directory, 'demo.sqlite');
+  let store = new SqliteBookings(path);
+  try {
+    await store.cancelBooking('slot_3pm');
+    await store.bookReplacement({ slotId: 'slot_3pm', contactId: 'client_5', startsAt: demoTime('15:30'), idempotencyKey: 'old-day' });
+    await store.waiveCancellationFee('slot_3pm');
+    const oldBookings = store.bookings();
+    store.close();
+    const db = new DatabaseSync(path);
+    try {
+      for (const booking of oldBookings) {
+        booking.startsAt = `2000-01-01${booking.startsAt.slice(10)}`;
+        db.prepare('UPDATE bookings SET data = ? WHERE id = ?').run(JSON.stringify(booking), booking.id);
+      }
+    } finally { db.close(); }
+    store = new SqliteBookings(path);
+    assert.equal(store.bookings().length, 6);
+    assert.ok(store.bookings().every(booking => (booking.startsAt.startsWith(DEMO_DATE) || booking.startsAt.startsWith(addDays(DEMO_DATE, 1))) && booking.status === 'booked' && booking.feeStatus === 'not_due'));
+    assert.ok(store.waitlist().every(client => client.status === 'waiting'));
+    assert.equal(store.events().length, 1);
+    assert.match(store.events()[0]!.message, /Demo reset/);
+  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('existing text-only activity database upgrades without losing history', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'dispatch-event-upgrade-'));
+  const path = join(directory, 'demo.sqlite');
+  let store = new SqliteBookings(path);
+  store.close();
+  const legacy = new DatabaseSync(path);
+  legacy.exec('ALTER TABLE events DROP COLUMN action');
+  legacy.prepare('INSERT INTO events (time,message) VALUES (?,?)').run(new Date().toISOString(), 'Legacy event');
+  legacy.close();
+  try {
+    store = new SqliteBookings(path);
+    assert.equal(store.events()[0]?.message, 'Legacy event');
+    assert.equal(store.events()[0]?.action, undefined);
+    store.log('New structured event', { kind: 'availability_checked', source: 'voice_tool', slotId: 'slot_3pm', available: false });
+    assert.equal(store.events()[0]?.action?.available, false);
+    assert.equal(store.bookings().length, 6);
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
 });
