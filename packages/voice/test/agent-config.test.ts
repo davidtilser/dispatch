@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { dynamicVariables } from '../dist/demo.js';
-import { dispatchFirstMessage } from '../dist/agent-config.js';
+import { bookingDecisionInstructions, dispatchFirstMessage, dispatchPrompt, supersededInstructions } from '../dist/agent-config.js';
 import { enableAutomaticHangup } from '../dist/update-agent.js';
 
 test('existing agent gains natural speech and end_call while preserving custom instructions; updates are repeatable', async () => {
@@ -11,7 +11,7 @@ test('existing agent gains natural speech and end_call while preserving custom i
   const agent = { agent_id: 'agent_test', name: 'Dispatch', metadata: { created_at_unix_secs: 1, updated_at_unix_secs: 1 }, conversation_config: {
     tts: { voice_id: 'existing-voice' },
     agent: { first_message: 'Existing greeting', prompt: {
-      prompt: 'Custom shop instructions.\nAfter a confirmed booking or decline, say a short goodbye. The customer can end the web call.',
+      prompt: 'Custom shop instructions.\nAfter a confirmed booking or decline, say a short goodbye. The customer can end the web call.\nBefore confirming any booking, obtain explicit agreement to the exact time, then call accept_slot.\nIf the customer declines the offer, call decline_slot and thank them. Do not pressure them.',
       llm: 'gemini-2.0-flash', tool_ids: ['check', 'accept', 'decline'],
       built_in_tools: { skip_turn: { type: 'system', name: 'skip_turn', params: { system_tool_type: 'skip_turn' } } },
     } },
@@ -33,7 +33,9 @@ test('existing agent gains natural speech and end_call while preserving custom i
       assert.match(patch.prompt, /Custom shop instructions/);
       assert.match(patch.prompt, /Never read ISO dates/);
       assert.match(patch.prompt, /Keep reminders short/);
-      assert.doesNotMatch(patch.prompt, /The customer can end the web call/);
+      assert.match(patch.prompt, /all mean yes: call accept_slot for that time immediately/);
+      assert.match(patch.prompt, /A no is final/);
+      for (const sentence of supersededInstructions) assert.ok(!patch.prompt.includes(sentence), `superseded: ${sentence}`);
       if (updates) assert.equal(patch.prompt, agent.conversation_config.agent.prompt.prompt);
       Object.assign(agent.conversation_config.agent.prompt, patch);
       updates++;
@@ -55,4 +57,14 @@ test('the greeting speaks the local day and actual offered time, without an ISO 
   const greeting = dispatchFirstMessage.replace(/{{(\w+)}}/g, (_, key) => variables[key]!);
   assert.match(greeting, /for today at 3:30 PM for \$45/);
   assert.doesNotMatch(greeting, /2026-09-19|15:30|{{/);
+});
+
+test('the prompt tells the agent to book on a plain yes and never push after a no', () => {
+  assert.ok(dispatchPrompt.includes(bookingDecisionInstructions), 'setup prompt carries the decision rules');
+  assert.match(bookingDecisionInstructions, /Never ask the customer to confirm a time they already accepted/);
+  assert.match(bookingDecisionInstructions, /After a decline never offer another time/);
+  assert.match(bookingDecisionInstructions, /Mention other times only if the customer asks/);
+  // Both outcomes must hang up, not just the decline.
+  assert.match(bookingDecisionInstructions, /After accept_slot or decline_slot returns ok: true, say one short goodbye and use end_call/);
+  for (const sentence of supersededInstructions) assert.ok(!dispatchPrompt.includes(sentence), `superseded: ${sentence}`);
 });

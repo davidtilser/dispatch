@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { NestFactory } from '@nestjs/core';
 import { VoiceModule } from '../dist/voice/voice.module.js';
-import { SqliteBookings, demoTime } from '@dispatch/data';
+import { DEMO_DATE, SqliteBookings, demoTime } from '@dispatch/data';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -55,7 +55,7 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal(started.dynamicVariables.offered_time, '3 PM');
     assert.equal(started.dynamicVariables.available_times, '3 PM, 3:30 PM');
     assert.match(started.dynamicVariables.date, /^(today|tomorrow|Saturday, September 19th)$/);
-    assert.equal(started.session.context.date, '2026-09-19', 'booking context keeps its ISO date');
+    assert.equal(started.session.context.date, DEMO_DATE, 'booking context keeps its ISO date');
     assert.match(started.session.managerBrief.disclosure, /Jordan Davis/);
     assert.match(started.session.managerBrief.offer, /45/);
     assert.equal((await post('voice/sessions')).status, 409, 'second tab cannot claim the same offer');

@@ -6,6 +6,9 @@ import { AppHeader } from '../AppHeader';
 import { CalendarDays, MessagesSquare } from 'lucide-react';
 import './voice.css';
 
+// Long enough for a one-line goodbye, short enough that the demo never stalls.
+const GOODBYE_MS = 8000;
+
 async function api<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api/voice/${path}`, {
     method: body === undefined ? 'GET' : 'POST',
@@ -31,6 +34,7 @@ export function VoiceDemo() {
   const connection = useRef<VoiceConversation | null>(null);
   const current = useRef<{ id?: string; cancelled: boolean } | null>(null);
   const busy = useRef(false);
+  const hangup = useRef<ReturnType<typeof setTimeout> | null>(null);
   const incomingOffer = status === 'disconnected' && config?.configured && !config.callActive
     && config.attemptId !== answeredOffer ? config?.attemptId ?? null : null;
   const ringtone = useRingtone(incomingOffer);
@@ -50,6 +54,7 @@ export function VoiceDemo() {
     const timer = setInterval(refresh, 1000);
     return () => {
       mounted = false; clearInterval(timer);
+      if (hangup.current) clearTimeout(hangup.current);
       if (current.current) current.current.cancelled = true;
       void connection.current?.endSession();
       if (current.current?.id) void api(`sessions/${current.current.id}/end`, { reason: 'ended' }).catch(() => {});
@@ -108,6 +113,12 @@ export function VoiceDemo() {
           if (!isCurrent()) return JSON.stringify({ ok: false, message: 'The call ended.' });
           const result = await api<VoiceDemoSession | Record<string, unknown>>(`sessions/${attempt.id}/${action}`, parameters);
           if ('status' in result && isCurrent()) setSession(result as VoiceDemoSession);
+          // The agent should say goodbye and call end_call itself. This is the backstop so a
+          // booked or declined call always hangs up, even if it keeps talking instead.
+          if ((action === 'accept' || action === 'decline') && isCurrent()) {
+            if (hangup.current) clearTimeout(hangup.current);
+            hangup.current = setTimeout(() => { void connection.current?.endSession(); }, GOODBYE_MS);
+          }
           return JSON.stringify({ ok: true, ...result });
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Could not complete the request';
@@ -135,6 +146,7 @@ export function VoiceDemo() {
           if (!isCurrent()) return;
           attempt.closed = true;
           connection.current = null;
+          if (hangup.current) { clearTimeout(hangup.current); hangup.current = null; }
           setStatus('disconnecting');
           void api<VoiceDemoSession>(`sessions/${attempt.id}/end`, { reason: details.reason === 'error' ? 'failed' : 'ended' })
             .then((value) => { if (isCurrent()) setSession(value); })

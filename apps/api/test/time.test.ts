@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spokenDate } from '@dispatch/voice';
+import { DEMO_DATE, demoDate, demoTime } from '@dispatch/data';
 
 const zone = 'America/Los_Angeles';
 
@@ -23,4 +24,17 @@ test('tomorrow follows the local calendar across daylight-saving and year bounda
     'tomorrow');
   assert.equal(spokenDate('2027-01-01', zone, new Date('2026-12-31T23:30:00-08:00')),
     'tomorrow');
+});
+
+test('the demo day is tomorrow in the shop timezone, so offered times are never past', () => {
+  // Late evening in Los Angeles: a "today" demo would already be offering past times.
+  assert.equal(demoDate(new Date('2026-09-20T04:30:00Z')), '2026-09-20');
+  assert.equal(demoDate(new Date('2026-09-19T17:00:00Z')), '2026-09-20');
+  // Across a DST boundary the local calendar still advances exactly one day.
+  assert.equal(demoDate(new Date('2026-03-07T23:30:00-08:00')), '2026-03-08');
+  assert.equal(demoDate(new Date('2026-12-31T23:30:00-08:00')), '2027-01-01');
+  // Every seeded opening is in the future, with the offset that date really has.
+  assert.ok(Date.parse(demoTime('09:00')) > Date.now(), 'first slot is still ahead');
+  assert.ok(demoTime('15:00').startsWith(`${DEMO_DATE}T15:00:00`), 'slots sit on the demo date');
+  assert.match(demoTime('15:00'), /[+-]\d{2}:\d{2}$/);
 });
