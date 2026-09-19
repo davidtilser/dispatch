@@ -25,12 +25,20 @@ export interface WaitlistContact {
   name: string;
   phoneE164: string;
 }
+// What the voice agent says and is allowed to do on one call. Written by the manager.
+export interface CallBrief {
+  disclosure: string;
+  offer: string;
+  allowedAlternatives: string[];
+  mustNot: string[];
+}
 export interface CallRequest {
   runId: string;
   attemptId: string;
   business: BusinessProfile;
   slot: BookingSlot;
   contact: WaitlistContact;
+  brief?: CallBrief;
 }
 export type CallOutcome =
   | { type: 'accepted'; startsAt: string }
