@@ -1,0 +1,7 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" }, { "path": "packages/data" },
+    { "path": "packages/voice" }, { "path": "packages/agents" }, { "path": "apps/api" }
+  ]
+}

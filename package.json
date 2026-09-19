@@ -1,0 +1,24 @@
+{
+  "name": "dispatch",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "tsc -b && concurrently -k -n types,api,web \"tsc -b --watch --preserveWatchOutput\" \"npm run dev -w @dispatch/api\" \"npm run dev -w @dispatch/web\"",
+    "build:packages": "tsc -b packages/contracts packages/data packages/voice packages/agents",
+    "build": "tsc -b && npm run build -w @dispatch/web",
+    "typecheck": "tsc -b && tsc -p apps/web/tsconfig.json",
+    "check": "npm run typecheck && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "concurrently": "^9.2.0",
+    "typescript": "^5.9.3"
+  }
+}
