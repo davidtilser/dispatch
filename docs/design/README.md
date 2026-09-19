@@ -47,3 +47,14 @@ Text pairings checked against WCAG (AA needs 4.5:1 for body text).
 The Tailwind scales are generated tints/shades around each base color; only the
 four hexes above are the actual brand colors. Tailwind is not currently used by
 `apps/web`, the file is there for anyone starting a Tailwind surface.
+
+## Web application
+
+`apps/web/src/styles.css` imports `palette.css` directly and defines shared
+surface, text, border and focus tokens for the shop dashboard and voice page.
+Muted text is a Cornsilk tint; light notices use navy text. Booking states keep
+explicit labels and distinct fills/outlines so they do not rely on color alone.
+
+The supplied Dispatch logo lives at `apps/web/public/dispatch-logo.png` and is
+used in both page headers and as the favicon. Its original artwork colors are
+preserved independently of the interface palette.

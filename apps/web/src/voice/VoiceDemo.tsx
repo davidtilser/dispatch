@@ -158,7 +158,7 @@ export function VoiceDemo() {
 
   const context = status !== 'disconnected' ? session?.context ?? config?.context : config?.context ?? session?.context;
   return <main className="voice-demo">
-    <nav><a href="/">← Dispatch</a><span>LIVE VOICE LAB</span></nav>
+    <nav><a className="brand-link" href="/" aria-label="Back to Dispatch shop dashboard"><img className="brand-logo" src="/dispatch-logo.png" alt="Dispatch" /><span>← Shop dashboard</span></a><span>LIVE VOICE LAB</span></nav>
     <header><p className="eyebrow">ONE OPEN SLOT. ONE CONVERSATION.</p>
       <h1>Let’s fill that spot.</h1>
       <p>You are the waitlist customer. Talk to Dispatch in English, agree to a time, or decline the offer.</p>

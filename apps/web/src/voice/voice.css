@@ -1,31 +1,37 @@
 .voice-demo { max-width: 1100px; margin: 32px auto; }
-.voice-demo nav { display: flex; justify-content: space-between; font-size: .75rem; letter-spacing: .1em; }
+.voice-demo nav { display: flex; align-items: center; gap: 16px; justify-content: space-between; font-size: .75rem; letter-spacing: .1em; }
 .voice-demo a { color: inherit; }
 .voice-demo header { margin: 56px 0 32px; }
 .voice-demo h1 { margin: 12px 0; }
-.voice-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+.voice-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
 .voice-demo section { margin: 0; padding: 30px; }
 .call-card { text-align: center; }
-.voice-orb { width: 112px; height: 112px; margin: 12px auto 30px; display: grid; place-items: center; border-radius: 50%; color: white; background: #214c3e; font-size: 3rem; font-weight: 600; box-shadow: 0 0 0 12px #e9f0e8; }
-.voice-orb.live { background: #287255; }
+.voice-orb { width: 112px; height: 112px; margin: 12px auto 30px; display: grid; place-items: center; border-radius: 50%; color: var(--cornsilk); background: var(--accent); font-size: 3rem; font-weight: 600; box-shadow: 0 0 0 12px var(--page-background); }
+.voice-orb.live { background: var(--cornsilk); color: var(--deep-navy); }
 .voice-orb.speaking { animation: breathe 1.4s ease-in-out infinite; }
-@keyframes breathe { 50% { box-shadow: 0 0 0 24px #e9f0e8; } }
-.call-actions { display: flex; justify-content: center; gap: 10px; margin: 26px 0 18px; }
-.voice-demo button { border: 0; border-radius: 8px; padding: 14px 22px; background: #214c3e; color: white; font: inherit; cursor: pointer; }
+@keyframes breathe { 50% { box-shadow: 0 0 0 24px var(--page-background); } }
+.call-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 26px 0 18px; }
+.voice-demo button { border: 0; border-radius: 8px; padding: 14px 22px; background: var(--accent); color: var(--cornsilk); font: inherit; cursor: pointer; }
 .voice-demo button:disabled { opacity: .45; cursor: not-allowed; }
-.voice-demo button.secondary { background: #e9f0e8; color: #214c3e; }
-.voice-demo button.end-call { background: #953e36; }
-.voice-demo button:focus-visible, .voice-demo a:focus-visible { outline: 3px solid #d49027; outline-offset: 3px; }
-.booking-result { border-top: 1px solid #dce4dc; padding: 20px 0; }
+.voice-demo button.secondary { background: transparent; border: 1px solid var(--cornsilk); color: var(--text-primary); }
+.voice-demo button.end-call { background: var(--cornsilk); color: var(--text-on-light); }
+.booking-result { border-top: 1px solid var(--border); padding: 20px 0; }
 .booking-result p { margin-bottom: 0; }
-.booking-result.filled { color: #206644; }
+.booking-result.filled { color: var(--cornsilk); background: var(--accent); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
 .voice-demo .transcript-card { margin-top: 20px; }
 .transcript { max-height: 300px; overflow: auto; }
 .transcript p { display: flex; gap: 20px; }
 .transcript strong { min-width: 70px; }
-.empty-transcript, .voice-demo footer { color: #66786f; }
+.empty-transcript, .voice-demo footer { color: var(--text-muted); }
 .voice-demo footer { text-align: center; margin-top: 24px; font-size: .8rem; }
-.setup-note { background: #fff2d3; border: 1px solid #e5cea0; padding: 20px; border-radius: 10px; margin-bottom: 24px; }
-.voice-error { padding: 14px 20px; border-radius: 8px; background: #fae4df; color: #792e29; }
+.setup-note { --text-muted: var(--text-on-light-muted); --focus-ring: var(--regal-navy); color: var(--text-on-light); background: var(--cornsilk); border: 1px solid var(--border); padding: 20px; border-radius: 10px; margin-bottom: 24px; }
+.voice-error { padding: 14px 20px; border-radius: 8px; background: var(--cornsilk); color: var(--text-on-light); border-left: 4px solid var(--regal-navy); }
 @media (max-width: 680px) { .voice-grid { grid-template-columns: 1fr; } .voice-demo { margin: 16px auto; } .voice-demo header { margin-top: 36px; } .voice-demo section { padding: 24px; } }
 @media (prefers-reduced-motion: reduce) { .voice-orb.speaking { animation: none; } }
+
+.voice-demo header>p:last-child, .call-card>p { color: var(--text-muted); }
+.voice-demo code, .transcript span { overflow-wrap: anywhere; }
+@media (hover: hover) {
+  .voice-demo button:hover:not(:disabled) { background: var(--cornsilk); color: var(--deep-navy); }
+  .voice-demo button.end-call:hover:not(:disabled) { background: var(--accent); color: var(--cornsilk); }
+}
