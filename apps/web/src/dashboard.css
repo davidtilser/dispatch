@@ -44,6 +44,9 @@
 .badge.cancelled { border: 1px dashed var(--cornsilk); background: var(--page-background); color: var(--text-primary); }
 .badge.replacement { background: var(--cornsilk); color: var(--text-on-light); }
 .cancel-button { border: 1px solid var(--border); background: var(--surface); border-radius: 5px; color: var(--text-primary); padding: 5px 7px; font-size: 10px !important; }
+.refill-notice { margin-bottom: 20px; padding: 14px; border: 1px solid var(--cornsilk); border-radius: 8px; font-size: 12px; }
+.refill-notice p { margin: 6px 0 10px; color: var(--text-muted); }
+.refill-notice small { display: block; margin-top: 8px; font-size: 11px; }
 .appointment.replacement { background: var(--accent); margin: 0 -12px; padding: 18px 12px; border-radius: 7px; }
 .calendar-note { margin: 20px 0 0; padding: 14px; background: var(--page-background); font-size: 11px; line-height: 1.6; color: var(--text-muted); border-radius: 6px; }
 .waitlist-person { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
