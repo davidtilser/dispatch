@@ -1,5 +1,6 @@
 /* Tailwind v4 theme scales generated from the base palette - see docs/design/README.md */
 @theme {
+  --color-deep-navy: #010736;
   --color-deep-navy-50: #e6e9fe;
   --color-deep-navy-100: #cdd3fe;
   --color-deep-navy-200: #9ba6fd;
@@ -12,6 +13,7 @@
   --color-deep-navy-900: #010732;
   --color-deep-navy-950: #010523;
 
+  --color-prussian-blue: #0d1c42;
   --color-prussian-blue-50: #eaeffb;
   --color-prussian-blue-100: #d4def7;
   --color-prussian-blue-200: #aabdee;
@@ -24,6 +26,7 @@
   --color-prussian-blue-900: #08122b;
   --color-prussian-blue-950: #060d1e;
 
+  --color-regal-navy: #22396f;
   --color-regal-navy-50: #ebf0f9;
   --color-regal-navy-100: #d8e0f3;
   --color-regal-navy-200: #b1c1e7;
@@ -36,6 +39,7 @@
   --color-regal-navy-900: #0c1427;
   --color-regal-navy-950: #080e1b;
 
+  --color-cornsilk: #fcf1d0;
   --color-cornsilk-50: #fdf8e7;
   --color-cornsilk-100: #fcf1cf;
   --color-cornsilk-200: #f9e29f;

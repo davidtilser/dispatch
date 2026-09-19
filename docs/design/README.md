@@ -45,8 +45,10 @@ Text pairings checked against WCAG (AA needs 4.5:1 for body text).
 | `palette.png` | visual reference |
 
 The Tailwind scales are generated tints/shades around each base color; only the
-four hexes above are the actual brand colors. Tailwind is not currently used by
-`apps/web`, the file is there for anyone starting a Tailwind surface.
+four hexes above are the actual brand colors, exposed as the unsuffixed tokens
+(`bg-deep-navy`, `text-cornsilk`, ...) next to their 50-950 scales. Tailwind is
+not currently used by `apps/web`, the file is there for anyone starting a
+Tailwind surface.
 
 ## Web application
 
