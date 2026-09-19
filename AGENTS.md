@@ -1,4 +1,4 @@
-# Repository Instructions — GetItDone
+# Repository Instructions — Dispatch
 
 Guidance for anyone (human or agent) working in this repository. See
 README.md for the product, stack, and security posture.

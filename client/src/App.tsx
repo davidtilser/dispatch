@@ -58,7 +58,7 @@ function HomePage() {
       >
         {/* Eyebrow */}
         <p className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-4">
-          GetItDone · Milestone 1
+          Dispatch · Milestone 1
         </p>
 
         {/* Headline */}

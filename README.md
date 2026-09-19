@@ -1,4 +1,4 @@
-# GetItDone
+# Dispatch
 
 > **Cancel free, as long as we fill your spot.**
 
@@ -13,7 +13,7 @@ A re-scheduling and waitlist web app bridging clients and small local businesses
 ```powershell
 # 1. Clone and enter the repo
 git clone <repo-url>
-cd getitdone
+cd dispatch
 
 # 2. Copy environment file and fill in values (optional — app runs without a key)
 Copy-Item server\.env.example server\.env
