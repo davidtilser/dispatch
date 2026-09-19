@@ -40,7 +40,9 @@ No credentials are required to use the calendar, reset, or run automated tests. 
 
 ## Data and reset
 
-The seed is a fixed demo day, **September 19, 2026**, America/Los_Angeles, one barber, five 45-minute $45 bookings and three waitlist clients. Original bookings have a $15 simulated cancellation fee. Alternative starts are the cancelled start or 30 minutes later, subject to business hours, service duration and calendar collisions.
+The seed is a fixed demo day, **September 19, 2026**, America/Los_Angeles, one barber, five 45-minute $45 bookings on the reference day, one occupied 1 PM appointment the following day, and three waitlist clients. Original bookings have a $15 simulated cancellation fee. The calendar supports September 19–25, with daily demo business hours 09:00–18:00. Search produces up to six real free starts on a 15-minute grid from service duration and current SQLite collisions. The original start and +30 minutes count as replacements; every other start, including tomorrow, is a separate appointment. Separate bookings keep the original cancellation fee pending and recovered revenue unchanged, while preparing the next waitlist candidate. Another browser call cannot begin until the current audio ends.
+
+For the cross-day demo, ask “What about tomorrow afternoon?” The demo's “today” is always September 19 in America/Los_Angeles. September 20 at 13:00 is occupied; 14:00 is initially free. Agree to the exact named day and time. The saved confirmation includes the date, and the dashboard's day selector shows the separate appointment. The booking tool requires `confirmed: true` for dated requests; legacy `{ time: "15:30" }` calls retain the existing explicit-acceptance tool semantics. Availability searches never reserve a slot.
 
 SQLite is created automatically at **`.demo/dispatch.sqlite` in the repo root**, independent of the API working directory. It is ignored by Git. Set `DEMO_DB_PATH` to an absolute path to override it (`:memory:` for tests). No database installation or migrations command is needed.
 
@@ -71,8 +73,8 @@ On acceptance, the path returns **client tool → VoiceService → DispatchManag
 | `GET /api/refills/:runId` | Manager run, attempts and brief |
 | `GET /api/voice/config` | Setup status and current manager-selected offer |
 | `POST /api/voice/sessions` | Claim offer with optional `{ "attemptId": "…" }`, obtain WebRTC token |
-| `POST /api/voice/sessions/:id/check-availability` | `{ "time": "15:30" }` |
-| `POST /api/voice/sessions/:id/accept` | Explicit agreed time; save replacement and waive fee |
+| `POST /api/voice/sessions/:id/check-availability` | `{ "date": "2026-09-20", "partOfDay": "afternoon" }` or legacy `{ "time": "15:30" }` |
+| `POST /api/voice/sessions/:id/accept` | Exact agreed `{ date, time, confirmed: true }`; only replacements waive the original fee |
 | `POST /api/voice/sessions/:id/decline` | Advance waitlist without booking |
 | `POST /api/voice/sessions/:id/end` | `{ "reason": "ended" }` or `failed`; never books or undoes a booking |
 
@@ -95,3 +97,9 @@ shared shop calendar. Client demo state survives navigation in the same browser
 tab through session storage; its Reset button restores only the client samples.
 The original shop Reset still resets the shared calendar and voice sessions.
 No simulated client voice engine replaces the real `/voice` implementation.
+
+## Existing voice agent calendar upgrade
+
+After integrating and starting the new API and browser code, run `npm run voice:update` from the configured checkout. Do not run `voice:setup` for an existing agent. The update inspects the configured agent's attached calendar client tools, rejects missing/duplicate/shared tools, updates their schemas in place, and adds date-aware search/consent instructions. It preserves tool IDs, voice, LLM, custom instructions, approved discounts and `end_call`. It is safe to repeat after a partial failure. Run `npm run voice:update -- --inspect` first for a read-only preflight. Start a fresh browser call after the update; an existing conversation keeps its previous configuration.
+
+The browser forwards the full client-tool parameters to the API. Deploying only the agent update against the old API is incompatible because that API discards the date. Automated tests mock only the ElevenLabs token/configuration transport; they do not verify real microphone speech recognition or a live audio conversation.

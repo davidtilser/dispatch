@@ -12,7 +12,9 @@ export interface BookingRepository {
     contactId: string;
     startsAt: string;
     idempotencyKey: string;
-  }): Promise<{ bookingId: string }>;
+  }): Promise<{ bookingId: string; kind?: 'replacement' | 'alternative' }>;
   waiveCancellationFee(slotId: string): Promise<void>;
 }
 export { SqliteBookings, DEMO_DATE, demoTime, localTime } from './sqlite.js';
+
+export { localDate, DEMO_LAST_DATE, BUSINESS_TIMEZONE, validDemoDate, spokenCalendarDate } from './calendar.js';

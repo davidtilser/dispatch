@@ -1,6 +1,6 @@
 import { BadGatewayException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { dynamicVariables, ElevenLabsWebVoice } from '@dispatch/voice';
-import type { VoiceDemoConfiguration, VoiceSessionStart } from '@dispatch/contracts';
+import type { AcceptRequest, AvailabilityRequest, VoiceDemoConfiguration, VoiceSessionStart } from '@dispatch/contracts';
 import { DemoCoordinator } from '../refill/demo-coordinator.js';
 
 @Injectable()
@@ -30,8 +30,8 @@ export class VoiceService {
     }
   }
   get(id: string) { return this.demo.get(id); }
-  check(id: string, time: string) { return this.demo.check(id, time); }
-  accept(id: string, time: string) { return this.demo.accept(id, time); }
+  check(id: string, input: AvailabilityRequest) { return this.demo.check(id, input); }
+  accept(id: string, input: AcceptRequest) { return this.demo.accept(id, input); }
   decline(id: string) { return this.demo.end(id, 'declined'); }
   end(id: string, reason: 'ended' | 'failed') { return this.demo.end(id, reason); }
 }

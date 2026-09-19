@@ -3,11 +3,10 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { BookingRepository } from './index.js';
-import type { DemoBooking, DemoDashboard, DemoEvent } from '@dispatch/contracts';
+import type { DemoBooking, DemoDashboard, DemoEvent, AvailabilityRequest, AvailableSlot } from '@dispatch/contracts';
 
-export const DEMO_DATE = '2026-09-19';
-export const demoTime = (time: string) => `${DEMO_DATE}T${time}:00-07:00`;
-export const localTime = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit' });
+import { DEMO_DATE, demoTime, localTime, localDate, validDemoDate, candidateTimes, spokenCalendarDate } from './calendar.js';
+export { DEMO_DATE, demoTime, localTime } from './calendar.js';
 
 // A single-barber calendar, backed by Node 24's built-in SQLite. No external service.
 export class SqliteBookings implements BookingRepository {
@@ -32,6 +31,8 @@ export class SqliteBookings implements BookingRepository {
           service: 'Haircut', priceCents: 4500, currency: 'USD', customerId: `client_${i}`, customerName: names[i]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' };
         this.save(booking);
       });
+      this.save({ id: 'slot_tomorrow', businessId: 'biz_001', startsAt: demoTime('13:00', '2026-09-20'), durationMinutes: 45,
+        service: 'Haircut', priceCents: 4500, currency: 'USD', customerId: 'client_0', customerName: names[0]!, status: 'booked', cancellationFeeCents: 1500, feeStatus: 'not_due' });
       this.log('Demo reset. Calendar and waitlist ready. No real payments or calendar integrations.');
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
@@ -51,7 +52,7 @@ export class SqliteBookings implements BookingRepository {
   async getWaitlist(_businessId: string) { return this.waitlist().filter(c => c.status === 'waiting'); }
   async cancelBooking(id: string) {
     const slot = await this.getSlot(id);
-    if (!slot || slot.status === 'replacement' || slot.feeStatus === 'waived') throw new Error('This booking cannot be cancelled in this demo.');
+    if (!slot || (slot.status === 'replacement' || slot.status === 'alternative') || slot.feeStatus === 'waived') throw new Error('This booking cannot be cancelled in this demo.');
     if (slot.status === 'cancelled') return;
     this.save({ ...slot, status: 'cancelled', feeStatus: 'pending' });
     this.log(`${slot.customerName} cancelled ${localTime(slot.startsAt)}. $15 cancellation fee pending refill.`);
@@ -64,34 +65,70 @@ export class SqliteBookings implements BookingRepository {
     for (const candidate of candidates) if (await this.isAvailable(id, candidate)) available.push(candidate);
     return available;
   }
-  async isAvailable(id: string, startsAt: string) {
-    const slot = await this.getSlot(id);
-    if (!slot || slot.status !== 'cancelled' || slot.feeStatus === 'waived') return false;
-    const start = Date.parse(startsAt), end = start + slot.durationMinutes * 60_000;
-    const delta = start - Date.parse(slot.startsAt);
-    if (![0, 30 * 60_000].includes(delta) || start < Date.parse(demoTime('09:00')) || end > Date.parse(demoTime('18:00'))) return false;
-    return !this.bookings().some(b => b.status !== 'cancelled' && start < Date.parse(b.startsAt) + b.durationMinutes * 60_000 && end > Date.parse(b.startsAt));
+  // The original refill window is deliberately narrow; every other available
+  // appointment is a separate booking and cannot recover this cancellation.
+  isRefillStart(slot: DemoBooking, startsAt: string) {
+    return [0, 30 * 60_000].includes(Date.parse(startsAt) - Date.parse(slot.startsAt));
   }
+  async searchAvailability(id: string, query: AvailabilityRequest): Promise<AvailableSlot[]> {
+    const slot = await this.getSlot(id);
+    const date = query.date ?? (slot ? localDate(slot.startsAt) : DEMO_DATE);
+    if (!slot || !validDemoDate(date)) return [];
+    const times = candidateTimes(query.partOfDay);
+    // Offer nearest real alternatives when the requested time collides.
+    if (query.time) times.sort((a, b) => Math.abs(Date.parse(demoTime(a, date)) - Date.parse(demoTime(query.time!, date)))
+      - Math.abs(Date.parse(demoTime(b, date)) - Date.parse(demoTime(query.time!, date))));
+    return times.filter(time => this.availability(id, demoTime(time, date)).available).slice(0, 6).map(time => ({
+      date, time, startsAt: demoTime(time, date), endsAt: new Date(Date.parse(demoTime(time, date)) + slot.durationMinutes * 60_000).toISOString(),
+      spokenDate: spokenCalendarDate(date),
+    }));
+  }
+  availability(id: string, startsAt: string): { available: boolean; reason: string; conflict?: { bookingId: string; customerName: string; startsAt: string; durationMinutes: number } } {
+    const slot = this.readSlot(id);
+    if (!slot || slot.status !== 'cancelled' || slot.feeStatus === 'waived') return { available: false, reason: 'This offer is no longer active.' };
+    const start = Date.parse(startsAt), end = start + slot.durationMinutes * 60_000;
+    if (!Number.isFinite(start)) return { available: false, reason: 'Invalid appointment time.' };
+    const date = localDate(startsAt);
+    if (!validDemoDate(date)) return { available: false, reason: 'Choose a day from September 19 through September 25.' };
+    if (start < Date.parse(demoTime('09:00', date)) || end > Date.parse(demoTime('18:00', date))) return { available: false, reason: 'The appointment must fit within business hours, 9 AM to 6 PM.' };
+    const conflict = this.bookings().find(b => b.businessId === slot.businessId && b.status !== 'cancelled' && start < Date.parse(b.startsAt) + b.durationMinutes * 60_000 && end > Date.parse(b.startsAt));
+    if (conflict) return { available: false, reason: 'That time overlaps another appointment.', conflict: { bookingId: conflict.id, customerName: conflict.customerName, startsAt: conflict.startsAt, durationMinutes: conflict.durationMinutes } };
+    return { available: true, reason: 'The full service fits in the shared calendar.' };
+  }
+  async isAvailable(id: string, startsAt: string) { return this.availability(id, startsAt).available; }
   async bookReplacement(input: { slotId: string; contactId: string; startsAt: string; idempotencyKey: string }) {
-    const existing = this.db.prepare('SELECT id FROM bookings WHERE idempotency_key = ?').get(input.idempotencyKey);
-    if (existing) return { bookingId: String(existing.id) };
-    if (!await this.isAvailable(input.slotId, input.startsAt)) throw new Error('Time no longer available');
-    const slot = (await this.getSlot(input.slotId))!;
-    const client = this.waitlist().find(c => c.id === input.contactId && c.status === 'waiting');
-    if (!client) throw new Error('Contact is no longer waiting');
-    const bookingId = `booking_${randomUUID()}`;
-    this.db.exec('BEGIN');
+    // No awaits between availability validation and INSERT: transaction also
+    // protects against a second connection writing to the shared SQLite file.
+    this.db.exec('BEGIN IMMEDIATE');
     try {
-      this.save({ ...slot, id: bookingId, startsAt: input.startsAt, customerId: client.id, customerName: client.name, status: 'replacement', feeStatus: 'not_due', replacesSlotId: slot.id }, input.idempotencyKey);
+      const existing = this.db.prepare('SELECT data FROM bookings WHERE idempotency_key = ?').get(input.idempotencyKey);
+      if (existing) {
+        const booking = JSON.parse(String(existing.data)) as DemoBooking;
+        if (booking.customerId !== input.contactId || Date.parse(booking.startsAt) !== Date.parse(input.startsAt)) throw new Error('Idempotency key already used for another booking');
+        this.db.exec('COMMIT');
+        return { bookingId: booking.id, kind: booking.status === 'alternative' ? 'alternative' as const : 'replacement' as const };
+      }
+      if (!this.availability(input.slotId, input.startsAt).available) throw new Error('Time no longer available');
+      const slot = this.readSlot(input.slotId)!;
+      const client = this.waitlist().find(c => c.id === input.contactId && c.status === 'waiting');
+      if (!client) throw new Error('Contact is no longer waiting');
+      const bookingId = `booking_${randomUUID()}`;
+      const kind = this.isRefillStart(slot, input.startsAt) ? 'replacement' as const : 'alternative' as const;
+      this.save({ ...slot, id: bookingId, startsAt: input.startsAt, customerId: client.id, customerName: client.name,
+        status: kind, feeStatus: 'not_due', ...(kind === 'replacement' ? { replacesSlotId: slot.id } : {}) }, input.idempotencyKey);
       this.db.prepare('UPDATE clients SET booked = 1 WHERE id = ?').run(client.id);
-      this.log(`Booked ${client.name} at ${localTime(input.startsAt)}. Replacement saved to the demo calendar.`);
+      this.log(`Booked ${client.name} on ${localDate(input.startsAt)} at ${localTime(input.startsAt)}. ${kind === 'replacement' ? 'Replacement saved to the demo calendar.' : 'Separate appointment saved; original gap and cancellation fee remain pending.'}`);
       this.db.exec('COMMIT');
+      return { bookingId, kind };
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
-    return { bookingId };
+  }
+  private readSlot(id: string): DemoBooking | null {
+    const row = this.db.prepare('SELECT data FROM bookings WHERE id = ?').get(id);
+    return row ? JSON.parse(String(row.data)) : null;
   }
   async waiveCancellationFee(id: string) {
     const slot = await this.getSlot(id);
-    if (!slot || !this.bookings().some(b => b.replacesSlotId === id)) throw new Error('A replacement must exist before waiving the fee');
+    if (!slot || !this.bookings().some(b => b.status === 'replacement' && b.replacesSlotId === id && this.isRefillStart(slot, b.startsAt))) throw new Error('A replacement must exist before waiving the fee');
     if (slot.feeStatus === 'waived') return;
     this.save({ ...slot, feeStatus: 'waived' });
     this.log(`${slot.customerName}’s $15 cancellation fee waived. Slot successfully refilled.`);

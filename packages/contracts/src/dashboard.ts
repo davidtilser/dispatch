@@ -2,7 +2,7 @@ import type { BookingSlot, RefillRun, WaitlistContact } from './index.js';
 export interface DemoBooking extends BookingSlot {
   customerId: string;
   customerName: string;
-  status: 'booked' | 'cancelled' | 'replacement';
+  status: 'booked' | 'cancelled' | 'replacement' | 'alternative';
   cancellationFeeCents: number;
   feeStatus: 'not_due' | 'pending' | 'waived';
   replacesSlotId?: string;

@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Header, Param, Post } from '@nestjs/common';
-import { voiceEndSchema, voiceTimeSchema } from '@dispatch/contracts';
+import { voiceAcceptSchema, voiceAvailabilitySchema, voiceEndSchema } from '@dispatch/contracts';
 import { VoiceService } from './voice.service.js';
 
 @Controller('voice')
@@ -21,12 +21,16 @@ export class VoiceController {
 
   @Post('sessions/:id/check-availability')
   check(@Param('id') id: string, @Body() body: unknown) {
-    return this.voice.check(id, this.parseTime(body));
+    const parsed = voiceAvailabilitySchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Use date YYYY-MM-DD, time HH:mm, and/or partOfDay morning, afternoon or evening.');
+    return this.voice.check(id, parsed.data);
   }
 
   @Post('sessions/:id/accept')
   accept(@Param('id') id: string, @Body() body: unknown) {
-    return this.voice.accept(id, this.parseTime(body));
+    const parsed = voiceAcceptSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Use an exact date YYYY-MM-DD and time HH:mm with confirmed: true after explicit agreement.');
+    return this.voice.accept(id, parsed.data);
   }
 
   @Post('sessions/:id/decline')
@@ -39,9 +43,4 @@ export class VoiceController {
     return this.voice.end(id, parsed.data.reason);
   }
 
-  private parseTime(body: unknown): string {
-    const parsed = voiceTimeSchema.safeParse(body);
-    if (!parsed.success) throw new BadRequestException('Expected time in HH:mm format, e.g. 15:30');
-    return parsed.data.time;
-  }
 }

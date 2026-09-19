@@ -45,6 +45,7 @@ export interface CallRequest {
 }
 export type CallOutcome =
   | { type: 'accepted'; startsAt: string }
+  | { type: 'alternative_booked'; startsAt: string }
   | { type: 'declined' }
   | { type: 'no_answer' }
   | { type: 'failed'; reason: string };

@@ -13,7 +13,7 @@ export function dynamicVariables(context: VoiceDemoContext, now = new Date()): R
   const discount = context.discount?.trim() ?? '';
   return { business_name: context.businessName, customer_name: context.customerName,
     discount, discount_offer: discount ? ` This opening includes a discount: ${discount}.` : '',
-    service: context.service, price: context.price, date: spokenDate(context.date, context.timezone, now), timezone: context.timezone,
+    service: context.service, price: context.price, reference_date: context.referenceDate ?? context.date, appointment_date: context.date, date: spokenDate(context.date, context.timezone, context.referenceDate ? new Date(`${context.referenceDate}T12:00:00-07:00`) : now), timezone: context.timezone,
     offered_time: spokenTime(context.offeredTime), available_times: context.availableTimes.map(spokenTime).join(', ') };
 }
 

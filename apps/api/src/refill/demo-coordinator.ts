@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, NotFoundException, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { DispatchManager } from '@dispatch/agents';
-import { SqliteBookings, DEMO_DATE, demoTime, localTime } from '@dispatch/data';
-import type { CallOutcome, CallRequest, DemoDashboard, VoiceDemoContext, VoiceDemoSession } from '@dispatch/contracts';
+import { SqliteBookings, DEMO_DATE, demoTime, localTime, localDate, validDemoDate, spokenCalendarDate } from '@dispatch/data';
+import type { AcceptRequest, AvailabilityRequest, AvailabilityResult, CallOutcome, CallRequest, DemoDashboard, VoiceDemoContext, VoiceDemoSession } from '@dispatch/contracts';
 import { randomUUID } from 'node:crypto';
 import { DemoVoice } from './demo-voice.js';
 import { BOOKINGS, MANAGER, VOICE } from './tokens.js';
@@ -37,7 +37,7 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
   }
   private async context(call: CallRequest): Promise<VoiceDemoContext> {
     return { businessName: call.business.name, customerName: call.contact.name, service: call.slot.service,
-      price: `$${call.slot.priceCents / 100}`, discount: call.slot.discount, date: DEMO_DATE, timezone: call.business.timezone,
+      price: `$${call.slot.priceCents / 100}`, discount: call.slot.discount, date: localDate(call.slot.startsAt), referenceDate: DEMO_DATE, timezone: call.business.timezone,
       offeredTime: localTime(call.slot.startsAt), availableTimes: (await this.bookings.availableTimes(call.slot.id)).map(localTime) };
   }
   configuration() {
@@ -100,24 +100,40 @@ export class DemoCoordinator implements OnModuleInit, OnModuleDestroy {
     if (entry.value.status !== 'active' || (await this.currentCall())?.attemptId !== entry.call.attemptId) throw new ConflictException('This offer is no longer active.');
     return entry;
   }
-  check(id: string, time: string) {
+  check(id: string, input: AvailabilityRequest | string): Promise<AvailabilityResult> {
     return this.serial(async () => {
       const { call, value } = await this.active(id);
-      const available = await this.bookings.isAvailable(call.slot.id, demoTime(time));
-      this.bookings.log(`Agent checked ${time} for ${call.contact.name}: ${available ? 'available' : 'unavailable'} (${call.slot.durationMinutes} minutes).`);
-      return { available, date: value.context.date, timezone: value.context.timezone, availableTimes: (await this.bookings.availableTimes(call.slot.id)).map(localTime) };
+      const query = typeof input === 'string' ? { time: input } : input;
+      const date = query.date ?? value.context.date;
+      const availableSlots = await this.bookings.searchAvailability(call.slot.id, { ...query, date });
+      const checked = query.time ? this.bookings.availability(call.slot.id, demoTime(query.time, date)) : undefined;
+      const available = checked?.available ?? availableSlots.length > 0;
+      const message = !validDemoDate(date) ? 'Choose a date from September 19 through September 25, 2026.'
+        : checked?.reason ?? (available ? 'These starts are available. Ask the customer to agree to an exact day and time before booking.' : 'No appointments are available in that part of the day. Ask about another day or time.');
+      this.bookings.log(`Agent checked ${date} ${query.time ?? query.partOfDay ?? 'all day'} for ${call.contact.name}: ${available ? 'available' : 'unavailable'} (${call.slot.durationMinutes} minutes).`);
+      return { available, date, referenceDate: DEMO_DATE, timezone: value.context.timezone,
+        availableTimes: availableSlots.map(slot => slot.time), availableSlots, message };
     });
   }
-  accept(id: string, time: string) {
+  accept(id: string, input: AcceptRequest | string) {
     return this.serial(async () => {
       const previous = this.find(id).value;
-      if (previous.status === 'accepted' && previous.booking?.time === time) return structuredClone(previous);
+      const request = typeof input === 'string' ? { time: input } : input;
+      const { time } = request;
+      const date = request.date ?? previous.context.date;
+      if (request.confirmed === false || (request.date && request.confirmed !== true)) throw new ConflictException('Obtain explicit agreement to the exact day and time before booking.');
+      if ((previous.status === 'accepted' || previous.status === 'alternative_booked') && previous.booking?.time === time && previous.booking.date === date) return structuredClone(previous);
       const { call, value } = await this.active(id);
-      if (!await this.bookings.isAvailable(call.slot.id, demoTime(time))) throw new ConflictException('That time is unavailable. Ask for one of the available times.');
-      const run = await this.manager.recordCallOutcome({ runId: call.runId, attemptId: call.attemptId, outcome: { type: 'accepted', startsAt: demoTime(time) } });
+      if (!validDemoDate(date) || !await this.bookings.isAvailable(call.slot.id, demoTime(time, date))) throw new ConflictException('That time is unavailable. Ask for one of the available times.');
+      const startsAt = demoTime(time, date);
+      const run = await this.manager.recordCallOutcome({ runId: call.runId, attemptId: call.attemptId, outcome: { type: 'accepted', startsAt } });
       const details = await this.manager.getRunDetails(run.id);
-      if (run.status !== 'filled' || !details?.bookingId) throw new ConflictException('The booking could not be confirmed.');
-      value.status = 'accepted'; value.booking = { id: details.bookingId, time }; value.feeWaived = run.feeWaived;
+      const attempt = details?.attempts.find(a => a.attemptId === call.attemptId);
+      const alternative = attempt?.outcome?.type === 'alternative_booked';
+      if (!attempt?.bookingId || (!alternative && run.status !== 'filled')) throw new ConflictException('The booking could not be confirmed.');
+      value.status = alternative ? 'alternative_booked' : 'accepted';
+      value.booking = { id: attempt.bookingId, time, date, startsAt, spokenDate: spokenCalendarDate(date), kind: alternative ? 'alternative' : 'replacement' };
+      value.feeWaived = !alternative && run.feeWaived;
       return structuredClone(value);
     });
   }

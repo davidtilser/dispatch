@@ -43,7 +43,7 @@ export interface ManagerBookings {
     contactId: string;
     startsAt: string;
     idempotencyKey: string;
-  }): Promise<{ bookingId: string }>;
+  }): Promise<{ bookingId: string; kind?: 'replacement' | 'alternative' }>;
   waiveCancellationFee(slotId: string): Promise<void>;
 }
 export interface ManagerVoice {
@@ -55,6 +55,7 @@ export interface AttemptView {
   contactName: string;
   conversationId?: string;
   outcome?: CallOutcome;
+  bookingId?: string;
 }
 export interface RunDetails {
   run: RefillRun;
@@ -148,6 +149,12 @@ export class DispatchManager implements ManagerAgent {
           startsAt,
           idempotencyKey: input.attemptId,
         });
+        attempt.bookingId = booking.bookingId;
+        if (booking.kind === 'alternative') {
+          attempt.outcome = { type: 'alternative_booked', startsAt };
+          await this.callNext(state);
+          return { ...state.run };
+        }
         state.bookingId = booking.bookingId;
         await this.deps.bookings.waiveCancellationFee(state.slot.id);
         state.run.status = 'filled';

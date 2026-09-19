@@ -31,7 +31,7 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     globalThis.fetch = async () => new Response(JSON.stringify({ token: 'test-token', conversation_id: 'test-conversation' }), { status: 200 });
     assert.equal((await post('voice/sessions')).status, 409, 'no isolated voice booking before cancellation');
     const initial = await get('demo/dashboard');
-    assert.equal(initial.bookings.length, 5);
+    assert.equal(initial.bookings.length, 6);
     assert.equal(initial.waitlist.length, 3);
     const cancellations = await Promise.all([post('slots/slot_3pm/cancel'), post('slots/slot_3pm/cancel')]);
     const runs = await Promise.all(cancellations.map(r => r.json()));
@@ -64,7 +64,7 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal((await post(`${path}/accept`, { time: '18:00' })).status, 409);
     assert.equal((await (await post(`${path}/check-availability`, { time: '16:00' })).json()).available, false, '45 minutes would overlap 16:30');
     assert.equal((await (await post(`${path}/check-availability`, { time: '15:30' })).json()).available, true);
-    assert.equal((await get('demo/dashboard')).bookings.length, 5, 'availability is not a booking');
+    assert.equal((await get('demo/dashboard')).bookings.length, 6, 'availability is not a booking');
     const accepts = await Promise.all([post(`${path}/accept`, { time: '15:30' }), post(`${path}/accept`, { time: '15:30' })]);
     const [booked, duplicate] = await Promise.all(accepts.map(r => r.json()));
     assert.equal(booked.status, 'accepted');
@@ -108,7 +108,7 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     const second = await (await post('voice/sessions')).json();
     await post(`voice/sessions/${second.session.id}/end`, { reason: 'ended' });
     const afterEnd = await get('demo/dashboard');
-    assert.equal(afterEnd.bookings.length, 5);
+    assert.equal(afterEnd.bookings.length, 6);
     assert.equal(afterEnd.bookings.find((b: any) => b.id === 'slot_3pm').feeStatus, 'pending');
     assert.equal(afterEnd.offer.customerName, 'Taylor Wilson');
     const third = await (await post('voice/sessions')).json();
@@ -117,6 +117,24 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal((await get('demo/dashboard')).run.feeWaived, false);
     await post('demo/reset');
     assert.equal((await get('demo/dashboard')).run, null);
+    await post('slots/slot_3pm/cancel');
+    const crossDay = await (await post('voice/sessions')).json();
+    const crossPath = `voice/sessions/${crossDay.session.id}`;
+    const search = await (await post(`${crossPath}/check-availability`, { date: '2026-09-20', partOfDay: 'afternoon' })).json();
+    assert.equal(search.available, true);
+    assert.ok(search.availableSlots.every((slot: any) => slot.date === '2026-09-20'));
+    assert.equal((await post(`${crossPath}/accept`, { date: '2026-09-20', time: '14:00' })).status, 400);
+    assert.equal((await post(`${crossPath}/accept`, { date: '2026-09-20', time: '13:00', confirmed: true })).status, 409);
+    const dated = await (await post(`${crossPath}/accept`, { date: '2026-09-20', time: '14:00', confirmed: true })).json();
+    assert.equal(dated.status, 'alternative_booked');
+    assert.equal(dated.booking.date, '2026-09-20');
+    assert.equal(dated.feeWaived, false);
+    assert.equal((await get('demo/dashboard')).offer.customerName, 'Sam Rivera');
+    assert.equal((await post('voice/sessions')).status, 409);
+    await post(`${crossPath}/end`, { reason: 'ended' });
+    assert.equal((await post('voice/sessions')).status, 201);
+    await post('demo/reset');
+
   } finally {
     globalThis.fetch = realFetch;
     for (const key of ['ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'DEMO_DB_PATH', 'DISPATCH_ENV_ID', 'DISPATCH_MANAGER_AGENT_ID']) {
@@ -140,11 +158,11 @@ test('SQLite persists bookings, clients and fees across reopen; reset restores s
     store = new SqliteBookings(path);
     assert.deepEqual(await store.bookReplacement(input), booked);
     assert.equal((await store.getSlot('slot_3pm'))?.feeStatus, 'waived');
-    assert.equal(store.bookings().length, 6);
+    assert.equal(store.bookings().length, 7);
     assert.equal(store.waitlist()[0]?.status, 'booked');
     assert.equal(await store.isAvailable('slot_3pm', demoTime('15:00')), false);
     store.reset();
-    assert.equal(store.bookings().length, 5);
+    assert.equal(store.bookings().length, 6);
     assert.equal(store.waitlist()[0]?.status, 'waiting');
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
 });

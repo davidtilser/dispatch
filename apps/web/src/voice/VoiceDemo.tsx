@@ -215,7 +215,8 @@ export function VoiceDemo() {
         <p className="eyebrow"><CalendarDays size={14} aria-hidden="true" />Appointment details</p><h2>{context?.businessName ?? 'Apblendzz'}</h2>
         {context && <><p>{context.service} · {context.price} · {context.date}</p><p>Offered: <strong>{context.offeredTime}</strong><br />Available starts: {context.availableTimes.join(', ')}<br /><small>{context.timezone}</small></p></>}
         <div className={`booking-result ${session?.feeWaived ? 'filled' : ''}`} aria-live="polite">
-          <strong>{session?.booking ? `Booked for ${session.booking.time}` : session?.status === 'declined' ? 'Offer declined' : session?.status === 'ended' || session?.status === 'failed' ? 'Call ended without a booking' : 'Waiting for an acceptance'}</strong>
+          <strong>{session?.booking ? `Booked for ${session.booking.spokenDate ?? session.booking.date ?? session.context.date} at ${session.booking.time}` : session?.status === 'declined' ? 'Offer declined' : session?.status === 'ended' || session?.status === 'failed' ? 'Call ended without a booking' : 'Waiting for an acceptance'}</strong>
+          {session?.status === 'alternative_booked' && <p>Separate appointment saved. The original opening is still available.</p>}
           <p>Cancellation fee: <b>{session?.feeWaived ? 'Waived' : 'Pending'}</b></p>
         </div>
         <small>This call updates the same demo calendar as the shop dashboard. Booking and fee changes are simulated.</small>
