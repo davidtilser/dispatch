@@ -37,7 +37,7 @@ const MainAppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#010736] text-[#fcf1d0] flex flex-col font-sans">
       <Header />
 
       {/* Floating Toast Notification */}
@@ -47,7 +47,7 @@ const MainAppContent: React.FC = () => {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2.5 border border-slate-700 text-xs font-medium"
+            className="fixed top-20 right-6 z-50 bg-[#0d1c42] text-[#fcf1d0] px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2.5 border border-[#22396f] text-xs font-medium"
           >
             <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
             <span>{toastMessage}</span>
@@ -76,13 +76,13 @@ const MainAppContent: React.FC = () => {
           >
             {/* Client Tab Switcher */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-              <div className="flex items-center space-x-2 border-b border-slate-200 pb-3">
+              <div className="flex items-center space-x-2 border-b border-[#22396f] pb-3">
                 <button
                   onClick={() => setClientTab('search')}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     clientTab === 'search'
-                      ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-[#22396f] text-[#fcf1d0] border border-[#22396f] shadow-xs'
+                      : 'text-[#fcf1d0]/70 hover:text-[#fcf1d0] hover:bg-[#0d1c42]'
                   }`}
                 >
                   Discover Services
@@ -91,8 +91,8 @@ const MainAppContent: React.FC = () => {
                   onClick={() => setClientTab('bookings')}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     clientTab === 'bookings'
-                      ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-[#22396f] text-[#fcf1d0] border border-[#22396f] shadow-xs'
+                      : 'text-[#fcf1d0]/70 hover:text-[#fcf1d0] hover:bg-[#0d1c42]'
                   }`}
                 >
                   My Appointments & Queue

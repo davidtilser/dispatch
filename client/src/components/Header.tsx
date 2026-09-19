@@ -10,48 +10,48 @@ export const Header: React.FC = () => {
   if (!user) return null;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <header className="sticky top-0 z-40 bg-[#0d1c42]/95 backdrop-blur-md border-b border-[#22396f]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-            <Sparkles size={20} className="text-white" />
+          <div className="w-9 h-9 rounded-xl bg-[#22396f] flex items-center justify-center text-[#fcf1d0] shadow-sm border border-[#22396f]/80">
+            <Sparkles size={18} className="text-[#fcf1d0]" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xl font-bold tracking-tight text-slate-900">Dispatch</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200/60">
-                Live Demo
+              <span className="text-xl font-bold tracking-tight text-[#fcf1d0]">Dispatch</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest bg-[#22396f] text-[#fcf1d0] px-2 py-0.5 rounded-full border border-[#22396f]">
+                Demo
               </span>
             </div>
-            <p className="text-xs text-slate-500 hidden sm:block">Cancel free, as long as we fill your spot</p>
+            <p className="text-[11px] text-[#d8ceb2] hidden sm:block">Cancel free, as long as we fill your spot</p>
           </div>
         </div>
 
         {/* Navigation & Role Controls */}
         <div className="flex items-center space-x-3">
           {/* Role switcher toggle */}
-          <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200">
+          <div className="bg-[#010736] p-1 rounded-xl flex items-center border border-[#22396f]">
             <button
               onClick={() => switchRole('client')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 user.role === 'client'
-                  ? 'bg-white text-indigo-700 shadow-sm font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#22396f] text-[#fcf1d0] shadow-xs font-semibold'
+                  : 'text-[#d8ceb2] hover:text-[#fcf1d0]'
               }`}
             >
-              <User size={14} />
+              <User size={13} />
               <span>Client Mode</span>
             </button>
             <button
               onClick={() => switchRole('business')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 user.role === 'business'
-                  ? 'bg-emerald-600 text-white shadow-sm font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#22396f] text-[#fcf1d0] shadow-xs font-semibold'
+                  : 'text-[#d8ceb2] hover:text-[#fcf1d0]'
               }`}
             >
-              <Store size={14} />
+              <Store size={13} />
               <span>Business Mode</span>
             </button>
           </div>
@@ -60,9 +60,9 @@ export const Header: React.FC = () => {
           <button
             onClick={resetDemo}
             title="Reset calendar and waitlist to initial demo state"
-            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/80"
+            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-[#d8ceb2] hover:text-[#fcf1d0] hover:bg-[#22396f]/60 rounded-lg transition-colors border border-[#22396f] cursor-pointer"
           >
-            <RotateCcw size={13} className="text-slate-400" />
+            <RotateCcw size={12} className="text-[#d8ceb2]" />
             <span className="hidden md:inline">Reset</span>
           </button>
 
@@ -70,9 +70,9 @@ export const Header: React.FC = () => {
           <button
             onClick={logout}
             title="Log out"
-            className="flex items-center space-x-1 px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-rose-200/60"
+            className="flex items-center space-x-1 px-3 py-1.5 text-xs text-rose-300 hover:text-rose-100 hover:bg-rose-950/40 rounded-lg transition-colors border border-rose-900/60 cursor-pointer"
           >
-            <LogOut size={13} />
+            <LogOut size={12} />
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>

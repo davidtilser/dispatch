@@ -1,7 +1,26 @@
 @import "@fontsource-variable/inter";
-
 @import "tailwindcss";
+
+@theme {
+  --color-deep-navy: #010736;
+  --color-prussian-blue: #0d1c42;
+  --color-regal-navy: #22396f;
+  --color-cornsilk: #fcf1d0;
+  --color-cornsilk-light: #fdf8e7;
+  --color-cornsilk-muted: #d8ceb2;
+}
 
 :root {
   font-family: 'Inter Variable', system-ui, sans-serif;
+  --deep-navy: #010736;
+  --prussian-blue: #0d1c42;
+  --regal-navy: #22396f;
+  --cornsilk: #fcf1d0;
+}
+
+body {
+  background-color: #010736;
+  color: #fcf1d0;
+  margin: 0;
+  padding: 0;
 }
