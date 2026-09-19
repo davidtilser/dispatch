@@ -87,7 +87,7 @@ function CalendarTimeline({ data, original, events }: { data: DemoDashboard; ori
     </div></div>
     <p className={`refill-calendar-note ${replacement ? 'saved' : ''}`}>{!originalOnDay ? `${dayBookings.length ? 'Bookings on this day' : 'This day has no saved bookings. Reservations here'} do not fill the original opening or waive its fee.` : replacement && original
       ? shift > 0 ? `${firstName(replacement.customerName)} starts ${shift} min later. ${time(original.startsAt)}–${time(replacement.startsAt)} remains open.` : `${firstName(replacement.customerName)} booked the original ${time(original.startsAt)} opening.`
-      : original?.status === 'cancelled' ? `${time(original.startsAt)} opening released. No replacement booked yet.` : 'Cancel an appointment to release its 45-minute window.'}</p>
+      : original?.status === 'cancelled' ? `${time(original.startsAt)} opening released. No replacement booked yet.` : 'Cancel an appointment to release its time slot.'}</p>
   </section>;
 }
 

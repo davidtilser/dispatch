@@ -1,7 +1,6 @@
 # Design: color palette
 
-Brand reference palette for Dispatch. Earlier palette explorations and the
-`color-in-use.pptx` deck are deprecated and intentionally not kept in the repo.
+Brand reference palette for Dispatch. The current interface adds the surface and text colors described under [Hackathon interface treatment](#hackathon-interface-treatment).
 
 ![Dispatch palette](palette.png)
 
@@ -52,7 +51,7 @@ four hexes above are the actual brand colors, exposed as the unsuffixed tokens
 
 `apps/web/src/styles.css` imports `palette.css` directly and defines shared
 surface, text, border and focus tokens for the shop dashboard and voice page.
-Muted text is a Cornsilk tint; light notices use navy text. Booking states keep
+The later interface overrides use muted text `#a3aec3`; light notices use navy text. Booking states keep
 explicit labels and distinct fills/outlines so they do not rely on color alone.
 
 The supplied Dispatch logo lives at `apps/web/public/dispatch-logo.png` and is
