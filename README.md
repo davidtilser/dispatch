@@ -10,13 +10,13 @@ A re-scheduling and waitlist web app bridging clients and small local businesses
 
 ## Setup
 
-```bash
+```powershell
 # 1. Clone and enter the repo
 git clone <repo-url>
 cd getitdone
 
 # 2. Copy environment file and fill in values (optional — app runs without a key)
-cp server/.env.example server/.env
+Copy-Item server\.env.example server\.env
 
 # 3. Install all workspaces
 npm install
@@ -26,6 +26,10 @@ npm run dev
 ```
 
 Open **http://127.0.0.1:5173** in your browser.
+
+> Dev machine is Windows + PowerShell — see [AGENTS.md](./AGENTS.md#environment-windows)
+> for terminal conventions (no bash-only commands, one command per line, etc.)
+> and for the two-browser-context tip when testing two roles at once.
 
 ---
 
