@@ -72,3 +72,54 @@
 }
 
 @media (max-width: 680px) { .voice-demo { padding: 0 16px 20px; margin: 0 auto; } .voice-demo .transcript p { gap: 10px; } .voice-demo .transcript strong { min-width: 60px; } }
+
+.voice-demo { max-width: 1320px; padding: 0 40px 28px; }
+.voice-demo header { margin: 46px 0 34px; animation: reveal-up .6s both; }
+.voice-demo header .eyebrow { font-size: 9px; letter-spacing: .18em; color: var(--highlight); }
+.voice-demo h1 { font-size: clamp(32px, 4vw, 52px); font-weight: 500; letter-spacing: -.055em; }
+.voice-demo h1>span { color: var(--highlight); }
+.voice-demo header>p:last-child { font-size: 12px; }
+.voice-demo section { border-radius: 20px; background: #101a2cd9; }
+.voice-demo .call-card { background: radial-gradient(ellipse at 50% 34%, #29466570, transparent 62%), #101a2c; padding-top: 24px; }
+.caller-portrait { width: 230px; height: 220px; margin: 28px auto 8px; }
+.caller-portrait::before { content: ''; position: absolute; width: 196px; height: 196px; border: 1px dashed #ead5a329; border-radius: 50%; animation: orbit-turn 50s linear infinite; }
+.caller-portrait::after { content: ''; position: absolute; width: 156px; height: 156px; border: 1px solid #ead5a322; border-radius: 50%; pointer-events: none; }
+.caller-portrait .voice-orb { width: 112px; height: 112px; background: linear-gradient(140deg, #ead5a329, #ead5a303), #142137; border-color: #ead5a350; color: var(--highlight); box-shadow: 0 0 60px #ead5a310, inset 0 1px #ffffff20; }
+.caller-portrait .voice-orb.live { background: linear-gradient(140deg, #ead5a3, #bda778); color: #172033; }
+.caller-portrait .voice-orb.speaking { animation: core-breathe 2s ease-in-out infinite; }
+.caller-phone { right: 48px; bottom: 44px; background: var(--highlight); }
+.call-card .caller-name { font-weight: 500; }
+.voice-demo .answer-call { background: var(--highlight); font-size: 13px; padding: 15px 28px; }
+.voice-demo button.end-call { background: #482937; color: #fecdd3; border: 1px solid #fda4af40; border-radius: 30px; font-size: 13px; }
+.voice-demo button.secondary { border-color: #ffffff25; border-radius: 30px; font-size: 13px; }
+.voice-demo .booking-card { display: flex; flex-direction: column; padding: 32px; }
+.voice-demo .booking-card h2 { font-size: 30px; font-weight: 500; letter-spacing: -1px; margin: 16px 0; }
+.voice-demo .booking-card>p { line-height: 2; }
+.booking-result { margin-top: auto; border: 1px solid #ead5a325; background: #ead5a307; padding: 22px; border-radius: 14px; margin-bottom: 22px; font-size: 13px; }
+.booking-result strong { font-weight: 500; color: var(--highlight); }
+.booking-result p { font-size: 11px; color: var(--text-muted); }
+.booking-result.filled { background: #95dfc20a; border-color: var(--success-border); border-radius: 14px; }
+.booking-result.filled strong { color: var(--success); }
+.voice-demo .transcript { background: #080e2070; border-radius: 12px; }
+.transcript p:not(.empty-transcript) { animation: reveal-up .3s both; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+.transcript strong { color: var(--highlight); font-size: 11px; }
+.empty-transcript { font-size: 12px; }
+.setup-note { color: var(--text-muted); background: #ead5a308; border-color: #ead5a325; font-size: 12px; border-radius: 14px; }
+.setup-note strong, .setup-note a { color: var(--highlight); }
+.setup-note small { color: var(--text-muted); }
+@media (max-width: 680px) {
+  .voice-demo { padding: 0 16px 24px; }
+  .voice-demo header { margin: 28px 0; }
+  .voice-demo .booking-card { padding: 24px; }
+  .voice-demo .booking-card h2 { margin: 8px 0; }
+  .booking-result { margin-top: 18px; }
+}
+
+.caller-portrait { height: 184px; margin-top: 18px; }
+.caller-portrait::before { width: 180px; height: 180px; }
+.caller-phone { bottom: 27px; }
+@media (max-width: 680px) {
+  .caller-portrait { height: 170px; margin-top: 12px; }
+  .caller-portrait::before { width: 168px; height: 168px; }
+  .caller-phone { bottom: 22px; }
+}

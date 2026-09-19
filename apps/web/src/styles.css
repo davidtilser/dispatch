@@ -44,3 +44,48 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--focus-ring); ou
   .brand-logo { width: 84px; height: 68px; }
   .brand-link>span { max-width: 75px; font-size: 11px; }
 }
+
+/* Dispatch / midnight studio */
+:root {
+  --page-background: #080e20;
+  --surface: #101a30;
+  --accent: #223455;
+  --border: #ffffff12;
+  --text-primary: #f7f3e8;
+  --text-muted: #a3aec3;
+  --highlight: #ead5a3;
+  --success: #95dfc2;
+  --success-border: #95dfc22e;
+  --success-surface: #14302e;
+  --danger-border: #fda4af30;
+  --danger-surface: #321e2c;
+}
+body { background: radial-gradient(ellipse at 80% 0, #1c305033, transparent 55%), var(--page-background); }
+button, input, select { font-family: inherit; }
+button, a, input { transition: background-color .2s, border-color .2s, box-shadow .2s, color .2s, transform .2s; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.signal { height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+.signal i { display: block; width: 3px; height: var(--bar); border-radius: 5px; background: currentColor; transform: scaleY(.35); opacity: .65; }
+.signal.is-active i { animation: signal-wave 1s ease-in-out var(--delay) infinite alternate; }
+.dispatch-orbit { position: relative; isolation: isolate; display: grid; place-items: center; height: 260px; width: 100%; max-width: 360px; justify-self: end; color: var(--highlight); }
+.dispatch-orbit::before { content: ''; position: absolute; inset: 5%; background: radial-gradient(ellipse, #ead5a313, transparent 65%); }
+.orbit-path { position: absolute; border: 1px solid #ead5a31c; border-radius: 50%; animation: orbit-turn 35s linear infinite; }
+.orbit-outer { width: 250px; height: 250px; }
+.orbit-inner { width: 182px; height: 182px; border-style: dashed; animation-direction: reverse; animation-duration: 45s; }
+.orbit-path span { position: absolute; top: 50%; left: -4px; width: 7px; height: 7px; background: var(--highlight); border-radius: 50%; box-shadow: 0 0 16px #ead5a370; }
+.orbit-inner span { background: var(--success); }
+.orbit-core { position: relative; display: grid; place-items: center; width: 100px; height: 100px; border: 1px solid #ead5a34a; border-radius: 30px; background: linear-gradient(140deg, #ead5a31f, #ead5a303), #142137; box-shadow: 0 20px 60px #0003, inset 0 1px #ffffff20; transform: rotate(-10deg); }
+.orbit-core svg { transform: rotate(10deg); }
+.is-active .orbit-core { animation: core-breathe 3s ease-in-out infinite; }
+.is-complete .orbit-core { color: var(--success); border-color: var(--success); }
+.orbit-label { position: absolute; display: flex; align-items: center; gap: 8px; z-index: 1; border: 1px solid #ffffff18; border-radius: 30px; padding: 10px 14px; background: #142036ed; color: var(--text-primary); font-size: 10px; box-shadow: 0 6px 20px #0002; white-space: nowrap; }
+.orbit-label-top { top: 27px; right: 0; }
+.orbit-label-top i { width: 5px; height: 5px; background: var(--success); border-radius: 50%; }
+.orbit-label-bottom { bottom: 28px; left: 0; color: var(--highlight); }
+@keyframes orbit-turn { to { transform: rotate(360deg); } }
+@keyframes signal-wave { from { transform: scaleY(.25); opacity: .45; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes core-breathe { 50% { box-shadow: 0 0 55px #ead5a32b, inset 0 1px #ffffff20; } }
+@keyframes reveal-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

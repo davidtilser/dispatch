@@ -5,6 +5,7 @@ import { useRingtone } from './useRingtone';
 import { AppHeader } from '../AppHeader';
 import { CalendarDays, MessagesSquare } from 'lucide-react';
 import './voice.css';
+import { Signal } from '../MotionUI';
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api/voice/${path}`, {
@@ -177,7 +178,7 @@ export function VoiceDemo() {
   return <main className="voice-demo">
     <AppHeader view="voice" />
     <header><p className="eyebrow">ONE OPEN SLOT. ONE CONVERSATION.</p>
-      <h1>Let’s fill that spot.</h1>
+      <h1>A voice. <span>A new possibility.</span></h1>
       <p>You are the waitlist customer. Talk to Dispatch in English, agree to a time, or decline the offer.</p>
     </header>
 
@@ -193,7 +194,7 @@ export function VoiceDemo() {
     <div className="voice-grid">
       <section className={`call-card ${incomingOffer ? 'incoming-call' : ''}`}>
         <div className="call-topline"><span className="call-status" role="status">{incomingOffer ? 'Incoming call' : status === 'connected' ? 'Connected' : status === 'connecting' ? 'Connecting' : status === 'disconnecting' ? 'Ending call' : 'Ready when you are'}</span><button className="ringtone-toggle" onClick={() => ringtone.enabled ? ringtone.disable() : void ringtone.enable()} aria-pressed={ringtone.enabled}>{ringtone.enabled ? '♫ Ringtone on' : '♫ Enable ringtone'}</button></div>
-        <div className="caller-portrait" aria-hidden="true"><span className="ring-wave wave-one" /><span className="ring-wave wave-two" /><div className={`voice-orb ${status === 'connected' ? 'live' : ''} ${speaking ? 'speaking' : ''}`}>D</div><span className="caller-phone"><PhoneIcon /></span></div>
+        <div className="caller-portrait" aria-hidden="true"><span className="ring-wave wave-one" /><span className="ring-wave wave-two" /><div className={`voice-orb ${status === 'connected' ? 'live' : ''} ${speaking ? 'speaking' : ''}`}><Signal active={status === 'connected' && speaking} /></div><span className="caller-phone"><PhoneIcon /></span></div>
         <p className="caller-label">DISPATCH · AI BOOKING ASSISTANT</p>
         <h2 className="caller-name">{context?.businessName ?? 'Dispatch'}</h2>
         <p className="caller-detail" aria-live="polite">{incomingOffer ? `Calling ${context?.customerName ?? 'you'} about an open appointment` : status === 'connected' ? (speaking ? 'Dispatch is speaking…' : muted ? 'Microphone muted' : `Listening to ${session?.context.customerName ?? 'you'}…`) : status === 'connecting' ? 'Opening your secure audio connection…' : status === 'disconnecting' ? 'Finishing your call…' : config?.callActive ? 'A call is open in another window' : 'Your next appointment starts with a conversation.'}</p>

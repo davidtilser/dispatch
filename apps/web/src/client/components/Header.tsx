@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
   if (!user) return null;
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0d1c42]/95 backdrop-blur-md border-b border-[#22396f]">
+    <header className="sticky top-0 z-40 bg-[#101a30]/95 backdrop-blur-md border-b border-[#263751]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex flex-wrap gap-3 items-center justify-between">
         {/* Brand */}
         <div className="flex items-center space-x-3">
@@ -19,29 +19,29 @@ export const Header: React.FC = () => {
             alt="Dispatch"
             width={56}
             height={56}
-            className="w-14 h-14 shrink-0 rounded-xl bg-white object-contain border border-[#22396f]"
+            className="w-14 h-14 shrink-0 rounded-xl bg-white object-contain border border-[#263751]"
           />
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xl font-bold tracking-tight text-[#fcf1d0]">Dispatch</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest bg-[#22396f] text-[#fcf1d0] px-2 py-0.5 rounded-full border border-[#22396f]">
+              <span className="text-xl font-bold tracking-tight text-[#f7f3e8]">Dispatch</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest bg-[#263751] text-[#f7f3e8] px-2 py-0.5 rounded-full border border-[#263751]">
                 Demo
               </span>
             </div>
-            <p className="text-[11px] text-[#d8ceb2] hidden sm:block">Cancel free, as long as we fill your spot</p>
+            <p className="text-[11px] text-[#a3aec3] hidden sm:block">Cancel free, as long as we fill your spot</p>
           </div>
         </div>
 
         {/* Navigation & Role Controls */}
         <div className="flex items-center space-x-3">
           {/* Role switcher toggle */}
-          <div className="bg-[#010736] p-1 rounded-xl flex items-center border border-[#22396f]">
+          <div className="bg-[#080e20] p-1 rounded-xl flex items-center border border-[#263751]">
             <button
               onClick={() => switchRole('client')}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 user.role === 'client'
-                  ? 'bg-[#22396f] text-[#fcf1d0] shadow-xs font-semibold'
-                  : 'text-[#d8ceb2] hover:text-[#fcf1d0]'
+                  ? 'bg-[#263751] text-[#f7f3e8] shadow-xs font-semibold'
+                  : 'text-[#a3aec3] hover:text-[#f7f3e8]'
               }`}
             >
               <User size={13} />
@@ -51,8 +51,8 @@ export const Header: React.FC = () => {
               onClick={() => window.location.assign('/')}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 user.role === 'business'
-                  ? 'bg-[#22396f] text-[#fcf1d0] shadow-xs font-semibold'
-                  : 'text-[#d8ceb2] hover:text-[#fcf1d0]'
+                  ? 'bg-[#263751] text-[#f7f3e8] shadow-xs font-semibold'
+                  : 'text-[#a3aec3] hover:text-[#f7f3e8]'
               }`}
             >
               <Store size={13} />
@@ -64,9 +64,9 @@ export const Header: React.FC = () => {
           <button
             onClick={resetDemo}
             title="Reset the client demo only"
-            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-[#d8ceb2] hover:text-[#fcf1d0] hover:bg-[#22396f]/60 rounded-lg transition-colors border border-[#22396f] cursor-pointer"
+            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs text-[#a3aec3] hover:text-[#f7f3e8] hover:bg-[#263751]/60 rounded-lg transition-colors border border-[#263751] cursor-pointer"
           >
-            <RotateCcw size={12} className="text-[#d8ceb2]" />
+            <RotateCcw size={12} className="text-[#a3aec3]" />
             <span className="hidden md:inline">Reset</span>
           </button>
 
