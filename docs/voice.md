@@ -12,6 +12,8 @@ English conversation with ElevenLabs over WebRTC. No Twilio, telephone number, o
 
 If an ElevenLabs agent already works, reuse its ID and skip agent creation.
 
+For agents created before automatic hangup was added, run `npm run voice:update` once. It enables the built-in `end_call` tool and updates the ending instructions on the existing agent while preserving voice, LLM, client tools and other settings. Start a new call after the update; no API restart is needed.
+
 The setup uses ElevenLabs' default voice/LLM. You can change them in the ElevenLabs dashboard. The agent receives shop/customer/appointment information via dynamic variables. There is a five-minute conversation cap. API keys remain on the backend; the browser receives only a conversation token.
 
 For a phone, expose Vite port 5173 through an HTTPS tunnel and allow that hostname in Vite if necessary. Plain `http://192.168…` will not provide browser microphone access. Both the page and `/api` must use the same origin. The current endpoints are for a trusted hackathon demo, with no application login.
@@ -21,7 +23,7 @@ For a phone, expose Vite port 5173 through an HTTPS tunnel and allow that hostna
 - “Yes, three PM works.” → agent calls `accept_slot` → booking confirmed, mock cancellation fee waived.
 - “Could I do three thirty instead?” → `check_availability` → agent asks for confirmation → `accept_slot` with `15:30`.
 - “Could I come at six?” → unavailable; no booking or fee waiver.
-- “No thanks.” → `decline_slot`; fee remains pending.
+- “No thanks.” → `decline_slot` → goodbye → automatic `end_call`; fee remains pending and the next candidate can answer a new web call.
 - End a call without accepting → no booking. Ending after an acceptance preserves the booking.
 
 The demo calendar is September 19, 2026, America/Los_Angeles, at Apblendzz. The manager selects the customer from SQLite's waitlist. For the 15:00 cancellation, 15:30 is available; 16:00 is unavailable because the 45-minute service would overlap a 16:30 appointment. Every call uses the same calendar as the shop dashboard. See [the exact flow and reset behavior](../README.md#exact-demo-flow).

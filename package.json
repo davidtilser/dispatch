@@ -16,6 +16,7 @@
     "typecheck": "tsc -b && tsc -p apps/web/tsconfig.json",
     "check": "npm run typecheck && npm test && npm run build",
     "voice:setup": "npm run build:packages && node --env-file-if-exists=.env packages/voice/dist/setup-agent.js",
+    "voice:update": "npm run build:packages && node --env-file-if-exists=.env packages/voice/dist/update-agent-cli.js",
     "test": "tsc -b && node --test packages/voice/test/*.test.ts apps/api/test/*.test.ts"
   },
   "devDependencies": {

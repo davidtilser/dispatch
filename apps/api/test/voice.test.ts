@@ -95,7 +95,12 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal((await get('demo/dashboard')).offer.customerName, 'Sam Rivera', 'duplicate decline does not skip another candidate');
     assert.equal((await post(`voice/sessions/${first.session.id}/accept`, { time: '15:30' })).status, 409);
     assert.equal((await post('voice/sessions')).status, 409, 'wait for previous audio call to end before the next call');
-    await post(`voice/sessions/${first.session.id}/end`, { reason: 'ended' });
+    // ElevenLabs end_call triggers the same disconnect callback as a manual end.
+    const disconnected = await (await post(`voice/sessions/${first.session.id}/end`, { reason: 'ended' })).json();
+    assert.equal(disconnected.status, 'declined', 'automatic disconnect preserves the refusal');
+    const afterDecline = await get('voice/config');
+    assert.equal(afterDecline.callActive, false, 'automatic disconnect releases the next web call');
+    assert.equal(afterDecline.context.customerName, 'Sam Rivera', 'disconnect does not skip the next candidate');
     const second = await (await post('voice/sessions')).json();
     await post(`voice/sessions/${second.session.id}/end`, { reason: 'ended' });
     const afterEnd = await get('demo/dashboard');
