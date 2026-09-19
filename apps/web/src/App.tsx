@@ -16,6 +16,7 @@ export function App() {
     <h1>Cancel free, as long as we fill your spot.</h1>
     <p>TypeScript workspace ready. Dashboard, agents, and voice integration are waiting for their owners.</p>
     <p className="status">NestJS API: {apiStatus}</p>
+    <p><a href="/voice">Open the live voice demo →</a></p>
     <section>
       <h2>Dashboard TODO</h2>
       <ul>
@@ -25,6 +26,6 @@ export function App() {
         <li>Show the replacement booking and fee waiver</li>
       </ul>
     </section>
-    <small>Scaffold only. No calls, bookings, crawling, or fee processing are implemented.</small>
+    <small>The voice demo is available separately. Full dashboard integration is in progress; calendar and fee changes are simulated.</small>
   </main>;
 }

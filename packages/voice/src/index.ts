@@ -1,6 +1,8 @@
 import type { CallOutcome, CallRequest } from '@dispatch/contracts';
+export * from './demo.js';
+export * from './elevenlabs.js';
 
-// Voice owner: implement using ElevenLabs Agents and a connected telephony number.
+// Future telephony adapter. Browser sessions use ElevenLabsWebVoice instead.
 // Resolve on provider acknowledgement; deliver the outcome asynchronously.
 export interface VoiceGateway {
   startCall(input: CallRequest): Promise<{ conversationId: string }>;

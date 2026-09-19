@@ -4,7 +4,7 @@
 
 When a customer cancels, a voice agent calls the shop's waitlist one person at a time. The first acceptance gets booked; the original customer's fee is waived after the slot is refilled. The business pays a percentage of the recovered booking (5–10%, TBD).
 
-This repository is a **team starter**, not an implemented demo. It contains a running NestJS health endpoint, a React placeholder, and TypeScript integration contracts. Crawling, calls, calendar, waitlist, booking, and fee handling still need implementation.
+This repository contains the team workspace and a **web voice demo** at `/voice`: an English ElevenLabs conversation with mock availability, booking, and fee state. See [voice setup and handoff](docs/voice.md). The complete cancellation → shared waitlist → manager → dashboard flow is still being integrated.
 
 ## Agreed stack
 
@@ -16,7 +16,7 @@ This repository is a **team starter**, not an implemented demo. It contains a ru
 | Dashboard | React 19 + Vite 7 |
 | Shared validation | Zod 4 and TypeScript contracts |
 | Crawl + manager agents | TypeScript; agent/LLM SDK chosen by Lucas |
-| Voice | ElevenLabs Agents + connected telephony number; adapter to implement |
+| Voice | ElevenLabs Agents over browser WebRTC; no Twilio required |
 | Calendar + waitlist | In-memory mocks for the demo; adapter to implement |
 | Dashboard updates | Start with polling run status; SSE can follow if needed |
 
@@ -33,6 +33,7 @@ npm run dev
 ```
 
 - Dashboard: http://localhost:5173
+- Web voice demo: http://localhost:5173/voice — [setup](docs/voice.md)
 - API health: http://127.0.0.1:3001/api/health
 - Check types and build: `npm run check`
 
@@ -56,7 +57,7 @@ docs/
   demo.md           Slides/business owner: story, business model, demo checklist
 ```
 
-Nest modules are empty wiring points. Implement agents as regular TypeScript classes in `packages/agents`, then provide them through Nest services/factory providers in `apps/api`. Keep ElevenLabs-specific code in `packages/voice`; keep browser code and all secrets separate.
+The voice Nest module implements browser-session routes. Business/refill modules remain integration points. Implement agents as regular TypeScript classes in `packages/agents`, then provide them through Nest services/factory providers in `apps/api`. Keep ElevenLabs-specific code in `packages/voice`; keep browser code and all secrets separate.
 
 TypeScript interfaces disappear at runtime. When injecting an interface in Nest, use a symbol/string provider token with `@Inject(...)`, or inject a concrete service class.
 
@@ -69,7 +70,7 @@ TypeScript interfaces disappear at runtime. When injecting an interface in Nest,
 5. Decline/no answer advances the waitlist. Acceptance checks availability, books once, then waives the original fee.
 6. Dashboard polls the run and displays calls, booking, and fee status.
 
-Suggested routes to implement together (only health exists today):
+Suggested routes for the full manager flow (the isolated web voice demo uses the session routes documented in [voice.md](docs/voice.md)):
 
 | Route | Owner / purpose |
 | --- | --- |
@@ -82,6 +83,6 @@ Suggested routes to implement together (only health exists today):
 
 The manager owns state transitions. A call-start response is not a booking. Enforce one active attempt, idempotent callbacks/cancellation, first acceptance wins, and fee waiver only after booking success. A request for 3:30 is accepted only if the mock calendar explicitly permits it. On ambiguous call failures, reconcile provider state before dialing again. Add tests for these rules with the implementation.
 
-The live voice integration needs a configured ElevenLabs agent, a connected phone number, opted-in demo contacts, a public HTTPS callback URL, and webhook/tool authentication. The adapter must support both successful conversations and no-answer/failure events. Credentials stay in `.env`; the starter binds the API to loopback and has no application auth yet.
+The current web voice demo needs an ElevenLabs API key and agent. `npm run voice:setup` creates the English agent and its tools. The participant opens `/voice` and clicks Accept; the browser forwards tool calls to NestJS. No phone number or public webhook is required locally. Credentials stay in `.env`; the API binds to loopback and has no application auth yet. Phone-based outbound calling is deferred. Nebius Token Factory credits are for model inference, not hosting.
 
 Official references: [Nest modules](https://docs.nestjs.com/modules), [Vite](https://vite.dev/guide/), [ElevenLabs outbound calls](https://elevenlabs.io/docs/api-reference/integrations/twilio/outbound-call), [post-call webhooks](https://elevenlabs.io/docs/eleven-agents/workflows/post-call-webhooks).

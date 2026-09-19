@@ -13,6 +13,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@dispatch/contracts": "*"
+    "@dispatch/contracts": "*",
+    "@elevenlabs/elevenlabs-js": "^2.68.0"
   }
 }

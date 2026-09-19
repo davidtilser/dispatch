@@ -14,7 +14,9 @@
     "build:packages": "tsc -b packages/contracts packages/data packages/voice packages/agents",
     "build": "tsc -b && npm run build -w @dispatch/web",
     "typecheck": "tsc -b && tsc -p apps/web/tsconfig.json",
-    "check": "npm run typecheck && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "voice:setup": "npm run build:packages && node --env-file-if-exists=.env packages/voice/dist/setup-agent.js",
+    "test": "tsc -b && node --test packages/voice/test/*.test.ts apps/api/test/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
