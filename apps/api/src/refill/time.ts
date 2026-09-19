@@ -13,8 +13,12 @@ export function spokenDate(date: string, timeZone: string, now = new Date()): st
   const weekday = parts.find((part) => part.type === 'weekday')?.value ?? '';
   const monthName = parts.find((part) => part.type === 'month')?.value ?? '';
   const spoken = `${weekday}, ${monthName} ${ordinal(day)}`;
-  if (date === localDate(now, timeZone)) return `today, ${spoken}`;
-  if (date === localDate(new Date(now.getTime() + 24 * 60 * 60 * 1000), timeZone)) return `tomorrow, ${spoken}`;
+  const today = localDate(now, timeZone);
+  if (date === today) return `today, ${spoken}`;
+  // Advance the local calendar date; a local day can be 23 or 25 hours.
+  const tomorrow = new Date(`${today}T00:00:00Z`);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  if (date === tomorrow.toISOString().slice(0, 10)) return `tomorrow, ${spoken}`;
   return spoken;
 }
 
