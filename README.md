@@ -10,7 +10,7 @@ This repository is a **team starter**, not an implemented demo. It contains a ru
 
 | Area | Technology |
 | --- | --- |
-| Language | TypeScript everywhere in application code |
+| Language | TypeScript |
 | Workspace | npm workspaces; one repo, shared packages |
 | Backend | NestJS 12 on Node.js 24, default Express adapter |
 | Dashboard | React 19 + Vite 7 |
