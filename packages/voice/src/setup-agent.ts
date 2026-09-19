@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { dispatchPrompt, dispatchTools, endCallTool } from './agent-config.js';
+import { dispatchFirstMessage, dispatchPrompt, dispatchTools, endCallTool } from './agent-config.js';
 import { demoContext, dynamicVariables } from './demo.js';
 
 // Run from the repository root via npm run voice:setup. Secrets stay in .env.
@@ -37,7 +37,7 @@ try {
     conversationConfig: {
       agent: {
         language: 'en',
-        firstMessage: 'Hi {{customer_name}}, I’m an AI assistant for {{business_name}}. A {{service}} appointment opened up on {{date}} at 3 PM for {{price}}. Would you like it?',
+        firstMessage: dispatchFirstMessage,
         dynamicVariables: { dynamic_variable_placeholders: dynamicVariables(demoContext()) },
         prompt: { prompt: dispatchPrompt, toolIds, builtInTools: { endCall: endCallTool } },
       },

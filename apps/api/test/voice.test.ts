@@ -52,7 +52,9 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     const started = await response.json();
     assert.equal(started.conversationToken, 'test-token');
     assert.equal(started.dynamicVariables.customer_name, 'Jordan Davis');
-    assert.match(started.dynamicVariables.date, /^(?:(?:today|tomorrow), )?Saturday, September 19th$/);
+    assert.equal(started.dynamicVariables.offered_time, '3 PM');
+    assert.equal(started.dynamicVariables.available_times, '3 PM, 3:30 PM');
+    assert.match(started.dynamicVariables.date, /^(today|tomorrow|Saturday, September 19th)$/);
     assert.equal(started.session.context.date, '2026-09-19', 'booking context keeps its ISO date');
     assert.match(started.session.managerBrief.disclosure, /Jordan Davis/);
     assert.match(started.session.managerBrief.offer, /45/);

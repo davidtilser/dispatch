@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { spokenDate, spokenTime } from './time.js';
 import type { VoiceDemoContext, VoiceDemoSession } from '@dispatch/contracts';
 
 export function demoContext(now = new Date()): VoiceDemoContext {
@@ -8,10 +9,10 @@ export function demoContext(now = new Date()): VoiceDemoContext {
     date, timezone: 'America/Los_Angeles', offeredTime: '15:00', availableTimes: ['15:00', '15:30', '16:00'] };
 }
 
-export function dynamicVariables(context: VoiceDemoContext): Record<string, string> {
+export function dynamicVariables(context: VoiceDemoContext, now = new Date()): Record<string, string> {
   return { business_name: context.businessName, customer_name: context.customerName,
-    service: context.service, price: context.price, date: context.date, timezone: context.timezone,
-    offered_time: context.offeredTime, available_times: context.availableTimes.join(', ') };
+    service: context.service, price: context.price, date: spokenDate(context.date, context.timezone, now), timezone: context.timezone,
+    offered_time: spokenTime(context.offeredTime), available_times: context.availableTimes.map(spokenTime).join(', ') };
 }
 
 export class VoiceSessionError extends Error {}

@@ -2,7 +2,6 @@ import { BadGatewayException, Injectable, ServiceUnavailableException } from '@n
 import { dynamicVariables, ElevenLabsWebVoice } from '@dispatch/voice';
 import type { VoiceDemoConfiguration, VoiceSessionStart } from '@dispatch/contracts';
 import { DemoCoordinator } from '../refill/demo-coordinator.js';
-import { spokenDate } from '../refill/time.js';
 
 @Injectable()
 export class VoiceService {
@@ -24,7 +23,7 @@ export class VoiceService {
       if ((await this.demo.get(session.id)).status !== 'active') throw new Error('The offer ended before voice connected.');
       // The agent reads the date aloud, so speak it. session.context.date stays ISO for the UI and demoTime.
       return { session, conversationToken,
-        dynamicVariables: { ...dynamicVariables(session.context), date: spokenDate(session.context.date, session.context.timezone) } };
+        dynamicVariables: dynamicVariables(session.context) };
     } catch (error) {
       await this.demo.end(session.id, 'failed').catch(() => {});
       throw new BadGatewayException(error instanceof Error ? error.message : 'ElevenLabs unavailable');

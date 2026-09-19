@@ -9,9 +9,9 @@ if (!apiKey || !agentId) {
 } else {
   try {
     await enableAutomaticHangup(new ElevenLabsClient({ apiKey }), agentId);
-    console.log('Existing ElevenLabs agent updated and verified: automatic hangup enabled. Start a new call to use it.');
+    console.log('Existing ElevenLabs agent updated and verified: natural dates, conversational reminders and automatic hangup enabled. Start a new call to use it.');
   } catch {
-    console.error('Could not update automatic hangup. Check ElevenLabs agent read/write permissions and network, then retry.');
+    console.error('Could not update voice agent. Check ElevenLabs agent read/write permissions and network, then retry.');
     process.exitCode = 1;
   }
 }

@@ -1,6 +1,6 @@
 // Speech formatting for dates the voice agent reads aloud.
 
-// "2026-09-20" in America/Los_Angeles -> "tomorrow, Sunday, September 20th".
+// "2026-09-20" in America/Los_Angeles -> "tomorrow".
 // Only the spoken copy changes; stored dates stay ISO for the UI and demoTime.
 export function spokenDate(date: string, timeZone: string, now = new Date()): string {
   const year = Number(date.slice(0, 4));
@@ -14,11 +14,11 @@ export function spokenDate(date: string, timeZone: string, now = new Date()): st
   const monthName = parts.find((part) => part.type === 'month')?.value ?? '';
   const spoken = `${weekday}, ${monthName} ${ordinal(day)}`;
   const today = localDate(now, timeZone);
-  if (date === today) return `today, ${spoken}`;
+  if (date === today) return 'today';
   // Advance the local calendar date; a local day can be 23 or 25 hours.
   const tomorrow = new Date(`${today}T00:00:00Z`);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  if (date === tomorrow.toISOString().slice(0, 10)) return `tomorrow, ${spoken}`;
+  if (date === tomorrow.toISOString().slice(0, 10)) return 'tomorrow';
   return spoken;
 }
 
@@ -30,4 +30,9 @@ function ordinal(day: number): string {
   const teen = day % 100;
   if (teen >= 11 && teen <= 13) return `${day}th`;
   return `${day}${['th', 'st', 'nd', 'rd'][day % 10] ?? 'th'}`;
+}
+
+export function spokenTime(time: string): string {
+  const [hour, minute] = time.split(':').map(Number);
+  return `${hour! % 12 || 12}${minute ? `:${String(minute).padStart(2, '0')}` : ''} ${hour! < 12 ? 'AM' : 'PM'}`;
 }

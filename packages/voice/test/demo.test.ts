@@ -48,7 +48,8 @@ test('demo sessions and returned objects do not share mutable booking state', ()
 test('dynamic context uses a future demo date and explicit timezone', () => {
   const context = demoContext(new Date('2026-09-19T19:00:00Z'));
   assert.equal(context.date, '2026-09-20');
-  assert.equal(dynamicVariables(context).offered_time, '15:00');
+  assert.equal(dynamicVariables(context, new Date('2026-09-19T19:00:00Z')).date, 'tomorrow');
+  assert.equal(dynamicVariables(context).offered_time, '3 PM');
   assert.equal(dynamicVariables(context).timezone, 'America/Los_Angeles');
 });
 

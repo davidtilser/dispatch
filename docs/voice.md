@@ -12,7 +12,7 @@ English conversation with ElevenLabs over WebRTC. No Twilio, telephone number, o
 
 If an ElevenLabs agent already works, reuse its ID and skip agent creation.
 
-For agents created before automatic hangup was added, run `npm run voice:update` once. It enables the built-in `end_call` tool and updates the ending instructions on the existing agent while preserving voice, LLM, client tools and other settings. Start a new call after the update; no API restart is needed.
+To update an existing agent’s greeting, natural date/time speech, reminders and automatic hangup, run `npm run voice:update` once. It refreshes the greeting and speech instructions, enables the built-in `end_call` tool and updates the ending instructions on the existing agent while preserving voice, LLM, client tools and other settings. Start a new call after the update; no API restart is needed.
 
 The setup uses ElevenLabs' default voice/LLM. You can change them in the ElevenLabs dashboard. The agent receives shop/customer/appointment information via dynamic variables. There is a five-minute conversation cap. API keys remain on the backend; the browser receives only a conversation token.
 
