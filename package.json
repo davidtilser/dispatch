@@ -1,0 +1,24 @@
+{
+  "name": "getitdone",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,client -c cyan,magenta --prefix-colors cyan,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "test": "npm run test -w shared && npm run test -w server && npm run test -w client",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client",
+    "build": "npm run build -w shared && npm run build -w server && npm run build -w client",
+    "start": "npm run start -w server",
+    "check:security": "node scripts/check-security.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

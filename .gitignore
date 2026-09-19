@@ -1,0 +1,23 @@
+# Environment secrets — never commit real .env files
+.env*
+!.env.example
+
+# Reference repos (team context only, not part of this project)
+dispatch-main/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+.vscode/settings.json

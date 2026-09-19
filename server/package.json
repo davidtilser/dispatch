@@ -1,0 +1,30 @@
+{
+  "name": "@getitdone/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/index.ts",
+    "build": "tsc --noEmit && tsx src/index.ts",
+    "start": "node --experimental-strip-types --env-file=.env src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@getitdone/shared": "*",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.5.0",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "typescript": "^5.5.4",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.9",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2"
+  }
+}
