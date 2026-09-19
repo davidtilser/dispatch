@@ -49,7 +49,9 @@ try {
   console.log(`Created agent ${agent.agentId}`);
   await save('ELEVENLABS_AGENT_ID', agent.agentId);
   console.log('Saved agent ID to .env. Restart npm run dev and open http://localhost:5173/voice.');
-} catch {
+} catch (error) {
+  const detail = error instanceof Error ? error.message : 'Unknown setup error';
+  console.error(detail.replaceAll(apiKey, '[REDACTED]'));
   console.error('Agent setup failed. Check ElevenLabs API permissions (agents and tools). Created tool IDs were saved in .env for retry. If the request timed out, check the ElevenLabs dashboard before retrying.');
   process.exitCode = 1;
 }
