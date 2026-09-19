@@ -1,9 +1,11 @@
 import 'reflect-metadata';
+import { DatabaseSync } from 'node:sqlite';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { NestFactory } from '@nestjs/core';
 import { VoiceModule } from '../dist/voice/voice.module.js';
-import { SqliteBookings, demoTime } from '@dispatch/data';
+import { spokenDate } from '@dispatch/voice';
+import { DEMO_DATE, SqliteBookings, demoTime } from '@dispatch/data';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -54,8 +56,8 @@ test('shared HTTP demo: cancellation → offer → voice tool → calendar booki
     assert.equal(started.dynamicVariables.customer_name, 'Jordan Davis');
     assert.equal(started.dynamicVariables.offered_time, '3 PM');
     assert.equal(started.dynamicVariables.available_times, '3 PM, 3:30 PM');
-    assert.match(started.dynamicVariables.date, /^(today|tomorrow|Saturday, September 19th)$/);
-    assert.equal(started.session.context.date, '2026-09-19', 'booking context keeps its ISO date');
+    assert.equal(started.dynamicVariables.date, spokenDate(DEMO_DATE, 'America/Los_Angeles'));
+    assert.equal(started.session.context.date, DEMO_DATE, 'booking context keeps its ISO date');
     assert.match(started.session.managerBrief.disclosure, /Jordan Davis/);
     assert.match(started.session.managerBrief.offer, /45/);
     assert.equal((await post('voice/sessions')).status, 409, 'second tab cannot claim the same offer');
@@ -146,5 +148,32 @@ test('SQLite persists bookings, clients and fees across reopen; reset restores s
     store.reset();
     assert.equal(store.bookings().length, 5);
     assert.equal(store.waitlist()[0]?.status, 'waiting');
+  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
+});
+
+
+test('opening an older demo database reseeds the calendar, waitlist and activity for tomorrow', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'dispatch-stale-day-'));
+  const path = join(directory, 'demo.sqlite');
+  let store = new SqliteBookings(path);
+  try {
+    await store.cancelBooking('slot_3pm');
+    await store.bookReplacement({ slotId: 'slot_3pm', contactId: 'client_5', startsAt: demoTime('15:30'), idempotencyKey: 'old-day' });
+    await store.waiveCancellationFee('slot_3pm');
+    const oldBookings = store.bookings();
+    store.close();
+    const db = new DatabaseSync(path);
+    try {
+      for (const booking of oldBookings) {
+        booking.startsAt = `2000-01-01${booking.startsAt.slice(10)}`;
+        db.prepare('UPDATE bookings SET data = ? WHERE id = ?').run(JSON.stringify(booking), booking.id);
+      }
+    } finally { db.close(); }
+    store = new SqliteBookings(path);
+    assert.equal(store.bookings().length, 5);
+    assert.ok(store.bookings().every(booking => booking.startsAt.startsWith(DEMO_DATE) && booking.status === 'booked' && booking.feeStatus === 'not_due'));
+    assert.ok(store.waitlist().every(client => client.status === 'waiting'));
+    assert.equal(store.events().length, 1);
+    assert.match(store.events()[0]!.message, /Demo reset/);
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
 });

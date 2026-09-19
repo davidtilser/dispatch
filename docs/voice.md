@@ -32,7 +32,7 @@ On `/voice`, click **Enable ringtone** once before the demo. Browsers require a 
 - “No thanks.” → `decline_slot` → goodbye → automatic `end_call`; fee remains pending and the next candidate can answer a new web call.
 - End a call without accepting → no booking. Ending after an acceptance preserves the booking.
 
-The demo calendar is September 19, 2026, America/Los_Angeles, at Apblendzz. The manager selects the customer from SQLite's waitlist. For the 15:00 cancellation, 15:30 is available; 16:00 is unavailable because the 45-minute service would overlap a 16:30 appointment. Every call uses the same calendar as the shop dashboard. See [the exact flow and reset behavior](../README.md#exact-demo-flow).
+The demo calendar is tomorrow in America/Los_Angeles at Apblendzz, calculated when the API starts. A new demo day automatically reseeds an older database. Restart the API before a demo if it has been running overnight. The manager selects the customer from SQLite's waitlist. For the 15:00 cancellation, 15:30 is available; 16:00 is unavailable because the 45-minute service would overlap a 16:30 appointment. Every call uses the same calendar as the shop dashboard. See [the exact flow and reset behavior](../README.md#exact-demo-flow).
 
 The manager's `CallRequest` supplies customer/shop/slot variables and the call brief. The browser forwards that brief as a contextual update using the existing SDK; WebRTC transport and the configured ElevenLabs agent stay unchanged. Booking tools return to the manager and shared repository. A second browser cannot start a concurrent call, and ending a call without acceptance advances the waitlist without creating a booking.
 

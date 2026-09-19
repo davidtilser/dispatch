@@ -1,5 +1,5 @@
 import type { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { callEndingInstructions, discountInstructions, dispatchFirstMessage, endCallTool, naturalSpeechInstructions } from './agent-config.js';
+import { bookingDecisionInstructions, callEndingInstructions, discountInstructions, dispatchFirstMessage, endCallTool, naturalSpeechInstructions, supersededInstructions } from './agent-config.js';
 
 // Update speech and ending policy; keep voice, LLM, client tools and custom instructions.
 export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: string) {
@@ -8,17 +8,17 @@ export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: s
   const placeholders = (current.conversationConfig.agent?.dynamicVariables as {
     dynamic_variable_placeholders?: Record<string, string>;
   } | undefined)?.dynamic_variable_placeholders;
-  const existing = (prompt?.prompt ?? '').replace(
-    'After a confirmed booking or decline, say a short goodbye. The customer can end the web call.', '',
-  ).replace('Never offer discounts, invent services or availability,', 'Never invent services or availability,').trim();
-  const updated = [callEndingInstructions, naturalSpeechInstructions, discountInstructions].reduce(
+  const existing = supersededInstructions
+    .reduce((text, sentence) => text.replaceAll(sentence, ''), prompt?.prompt ?? '')
+    .replaceAll('Never offer discounts, invent services or availability,', 'Never invent services or availability,')
+    .replace(/[^\S\n]+\n/g, '\n').replace(/\n{2,}/g, '\n').trim();
+  const updated = [callEndingInstructions, naturalSpeechInstructions, discountInstructions, bookingDecisionInstructions].reduce(
     (text, instructions) => text.includes(instructions) ? text : `${text}\n${instructions}`, existing,
   );
   await client.conversationalAi.agents.update(agentId, {
     conversationConfig: { agent: { firstMessage: dispatchFirstMessage,
       dynamicVariables: { dynamic_variable_placeholders: {
-        ...placeholders,
-        discount: '', discount_offer: '',
+        ...placeholders, discount: '', discount_offer: '',
       } }, prompt: {
       prompt: updated,
       builtInTools: { ...prompt?.builtInTools, endCall: endCallTool },
@@ -29,6 +29,8 @@ export async function enableAutomaticHangup(client: ElevenLabsClient, agentId: s
     || !verified.conversationConfig.agent.prompt.prompt?.includes(callEndingInstructions)
     || !verified.conversationConfig.agent.prompt.prompt?.includes(naturalSpeechInstructions)
     || !verified.conversationConfig.agent.prompt.prompt?.includes(discountInstructions)
+    || !verified.conversationConfig.agent.prompt.prompt?.includes(bookingDecisionInstructions)
+    || supersededInstructions.some((sentence) => verified.conversationConfig.agent?.prompt?.prompt?.includes(sentence))
     || verified.conversationConfig.agent.firstMessage !== dispatchFirstMessage) {
     throw new Error('Voice agent configuration was not saved.');
   }

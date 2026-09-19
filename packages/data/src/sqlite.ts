@@ -5,9 +5,31 @@ import { randomUUID } from 'node:crypto';
 import type { BookingRepository } from './index.js';
 import type { DemoBooking, DemoDashboard, DemoEvent } from '@dispatch/contracts';
 
-export const DEMO_DATE = '2026-09-19';
-export const demoTime = (time: string) => `${DEMO_DATE}T${time}:00-07:00`;
-export const localTime = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit' });
+export const TIMEZONE = 'America/Los_Angeles';
+
+const localDate = (at: Date) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(at);
+
+// The demo day is tomorrow in the shop's timezone, so every offered time is still
+// in the future however late in the day the demo runs.
+export function demoDate(now = new Date()): string {
+  const day = new Date(`${localDate(now)}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() + 1);
+  return day.toISOString().slice(0, 10);
+}
+
+// Real offset for that date, so the seeded times survive a DST change.
+function utcOffset(date: string): string {
+  const name = new Intl.DateTimeFormat('en-US', { timeZone: TIMEZONE, timeZoneName: 'longOffset' })
+    .formatToParts(new Date(`${date}T12:00:00Z`))
+    .find((part) => part.type === 'timeZoneName')?.value ?? 'GMT';
+  return name.replace('GMT', '') || '+00:00';
+}
+
+export const DEMO_DATE = demoDate();
+const DEMO_OFFSET = utcOffset(DEMO_DATE);
+export const demoTime = (time: string) => `${DEMO_DATE}T${time}:00${DEMO_OFFSET}`;
+export const localTime = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: TIMEZONE, hour: '2-digit', minute: '2-digit' });
 
 // A single-barber calendar, backed by Node 24's built-in SQLite. No external service.
 export class SqliteBookings implements BookingRepository {
@@ -18,7 +40,10 @@ export class SqliteBookings implements BookingRepository {
     this.db.exec(`CREATE TABLE IF NOT EXISTS clients (id TEXT PRIMARY KEY, name TEXT, phone TEXT, waitlist INTEGER, booked INTEGER DEFAULT 0);
       CREATE TABLE IF NOT EXISTS bookings (id TEXT PRIMARY KEY, data TEXT NOT NULL, idempotency_key TEXT UNIQUE);
       CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, message TEXT);`);
-    if (!this.db.prepare('SELECT id FROM clients LIMIT 1').get()) this.reset();
+    // A database kept from an earlier demo day holds past times; reseed it onto today's demo date.
+    const seeded = this.db.prepare('SELECT data FROM bookings LIMIT 1').get();
+    const staleDay = !!seeded && !(JSON.parse(String(seeded.data)) as DemoBooking).startsAt.startsWith(DEMO_DATE);
+    if (staleDay || !this.db.prepare('SELECT id FROM clients LIMIT 1').get()) this.reset();
   }
   close() { this.db.close(); }
   reset() {
