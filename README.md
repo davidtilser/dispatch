@@ -2,7 +2,11 @@
 
 **Cancel free, as long as we fill your spot.**
 
-Dispatch was created at **Dream AI Hackathon 2026**. The idea and all of the code were developed during the hackathon.
+**Finalist at [Dream AI Hackathon 2026](https://luma.com/upjkn37w).**
+
+Dispatch went from idea to working AI product in a single day at Frontier Tower in San Francisco. The idea and all of the code were developed during the hackathon, and the project advanced to the finals.
+
+Co-hosted by **LIKELION US, Founder Institute, and Sazze Partners**, the event challenged teams to solve a real problem, build a working AI-powered MVP, and turn it into a startup pitch—all in one day. Projects were judged on what teams built during the event, product quality, and startup potential.
 
 Built by [David Tilser](https://github.com/davidtilser), [Robin Desandre](https://github.com/doodsito), [Lucas Yoo](https://github.com/yoocas), and [Harshith Ande](https://github.com/Hershey-Bar).
 
