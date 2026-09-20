@@ -130,7 +130,7 @@ export const ClientSearch: React.FC<ClientSearchProps> = ({
             </span>
           </div>
           <p className="text-xs text-[#d8ceb2] mt-1">
-            Fremont, CA (37.5485° N, 121.9886° W) • Guaranteed zero double-booking
+            Fremont, CA • Guaranteed zero double-booking
           </p>
         </div>
 
@@ -239,16 +239,7 @@ export const ClientSearch: React.FC<ClientSearchProps> = ({
             </div>
 
             {/* Availability Switches */}
-            <div className="space-y-3 pt-2 border-t border-[#22396f]">
-              <label className="flex items-center justify-between text-xs text-[#d8ceb2] cursor-pointer">
-                <span>Open Right Now</span>
-                <input
-                  type="checkbox"
-                  checked={filters.openNowOnly}
-                  onChange={(e) => setFilters({ ...filters, openNowOnly: e.target.checked })}
-                  className="rounded text-[#22396f] focus:ring-[#fcf1d0] h-4 w-4 bg-[#010736] border-[#22396f]"
-                />
-              </label>
+            <div className="pt-2 border-t border-[#22396f]">
               <label className="flex items-center justify-between text-xs text-[#d8ceb2] cursor-pointer">
                 <span>Has Openings Today</span>
                 <input
@@ -298,7 +289,6 @@ export const ClientSearch: React.FC<ClientSearchProps> = ({
             <span>
               Showing <b>{filteredAndSortedBusinesses.length}</b> providers within {filters.maxDistanceMiles} miles
             </span>
-            <span className="font-semibold text-[#fcf1d0]">Sort: Distance Ascending</span>
           </div>
 
           <AnimatePresence>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../types';
-import { Lock, User, Store, ArrowRight, Sparkles, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Lock, User, Store, ArrowRight, Sparkles, ShieldAlert } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
@@ -146,16 +146,6 @@ export const LoginView: React.FC = () => {
 
           {/* Demo helper banner */}
           <div className="mt-6 pt-5 border-t border-[#22396f]/70">
-            <div className="bg-[#010736] p-3 rounded-xl border border-[#22396f] mb-3">
-              <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#fcf1d0] mb-1">
-                <CheckCircle2 size={13} className="text-emerald-400" />
-                <span>Demo Credentials Ready</span>
-              </div>
-              <p className="text-[11px] text-[#d8ceb2]">
-                Username: <code className="bg-[#0d1c42] px-1 py-0.5 rounded text-[#fcf1d0] font-mono border border-[#22396f]">login</code> • Password: <code className="bg-[#0d1c42] px-1 py-0.5 rounded text-[#fcf1d0] font-mono border border-[#22396f]">password</code>
-              </p>
-            </div>
-
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
